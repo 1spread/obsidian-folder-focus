@@ -9,6 +9,7 @@ A Finder-like folder navigation view for [Obsidian](https://obsidian.md).
 - **Single-click to open files**, double-click to enter folders
 - **Selection history** - remembers your position when navigating back
 - **Context menu integration** - right-click any folder to open it in Folder Focus
+- **Sort options** - sort by name, modified date, or created date
 
 ## Installation
 

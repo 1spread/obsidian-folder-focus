@@ -3,6 +3,8 @@ import type FolderFocusPlugin from './main';
 
 export const VIEW_TYPE_FOLDER_FOCUS = 'folder-focus-view';
 
+export type SortOrder = 'name' | 'modified' | 'created';
+
 export class FolderFocusView extends ItemView {
   plugin: FolderFocusPlugin;
 
@@ -10,6 +12,7 @@ export class FolderFocusView extends ItemView {
   currentFolder: TFolder | null = null;
   selectedIndex: number = 0;
   items: TAbstractFile[] = [];
+  sortOrder: SortOrder = 'name';
 
   // Folder history: remembers selected item path when navigating away
   folderHistory: Map<string, string> = new Map();
@@ -93,13 +96,27 @@ export class FolderFocusView extends ItemView {
 
   getSortedChildren(folder: TFolder): TAbstractFile[] {
     const children = [...folder.children];
-    // Sort: folders first, then files, alphabetically within each group
+    // Sort: folders first, then files, sorted within each group
     return children.sort((a, b) => {
       const aIsFolder = a instanceof TFolder;
       const bIsFolder = b instanceof TFolder;
       if (aIsFolder && !bIsFolder) return -1;
       if (!aIsFolder && bIsFolder) return 1;
-      return a.name.localeCompare(b.name);
+
+      // Apply sort order within same type
+      switch (this.sortOrder) {
+        case 'modified':
+          const aMtime = a instanceof TFile ? a.stat.mtime : 0;
+          const bMtime = b instanceof TFile ? b.stat.mtime : 0;
+          return bMtime - aMtime; // Newest first
+        case 'created':
+          const aCtime = a instanceof TFile ? a.stat.ctime : 0;
+          const bCtime = b instanceof TFile ? b.stat.ctime : 0;
+          return bCtime - aCtime; // Newest first
+        case 'name':
+        default:
+          return a.name.localeCompare(b.name);
+      }
     });
   }
 
@@ -134,8 +151,35 @@ export class FolderFocusView extends ItemView {
     this.headerEl.empty();
     if (!this.currentFolder) return;
 
-    const nameEl = this.headerEl.createDiv({ cls: 'folder-focus-name' });
+    // Top row: name and sort selector
+    const topRow = this.headerEl.createDiv({ cls: 'folder-focus-header-top' });
+
+    const nameEl = topRow.createDiv({ cls: 'folder-focus-name' });
     nameEl.setText(this.currentFolder.name || 'Vault Root');
+
+    // Sort dropdown
+    const sortEl = topRow.createDiv({ cls: 'folder-focus-sort' });
+    const sortSelect = sortEl.createEl('select', { cls: 'folder-focus-sort-select' });
+
+    const options: { value: SortOrder; label: string }[] = [
+      { value: 'name', label: 'Name' },
+      { value: 'modified', label: 'Modified' },
+      { value: 'created', label: 'Created' },
+    ];
+
+    options.forEach(opt => {
+      const optionEl = sortSelect.createEl('option', { value: opt.value, text: opt.label });
+      if (opt.value === this.sortOrder) {
+        optionEl.selected = true;
+      }
+    });
+
+    sortSelect.addEventListener('change', () => {
+      this.sortOrder = sortSelect.value as SortOrder;
+      this.items = this.getSortedChildren(this.currentFolder!);
+      this.selectedIndex = 0;
+      this.renderList();
+    });
 
     const pathEl = this.headerEl.createDiv({ cls: 'folder-focus-path' });
     pathEl.setText(this.currentFolder.path || '/');

@@ -13,17 +13,53 @@
   background: var(--background-secondary);
 }
 
+.folder-focus-header-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
 .folder-focus-name {
   font-size: 14px;
   font-weight: 600;
   color: var(--text-normal);
   margin-bottom: 4px;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.folder-focus-sort {
+  flex-shrink: 0;
+}
+
+.folder-focus-sort-select {
+  font-size: 11px;
+  padding: 2px 6px;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 4px;
+  background: var(--background-primary);
+  color: var(--text-muted);
+  cursor: pointer;
+  outline: none;
+}
+
+.folder-focus-sort-select:hover {
+  border-color: var(--interactive-accent);
+  color: var(--text-normal);
+}
+
+.folder-focus-sort-select:focus {
+  border-color: var(--interactive-accent);
 }
 
 .folder-focus-path {
   font-size: 11px;
   color: var(--text-muted);
   font-family: var(--font-monospace);
+  margin-top: 4px;
 }
 
 /* List */
