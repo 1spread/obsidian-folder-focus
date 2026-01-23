@@ -202,15 +202,14 @@ export class FolderFocusView extends ItemView {
     this.scrollToSelected();
   }
 
-  updateSelection() {
-    // Update CSS classes without re-rendering entire list
-    this.itemElements.forEach((el, index) => {
-      if (index === this.selectedIndex) {
-        el.addClass('is-selected');
-      } else {
-        el.removeClass('is-selected');
-      }
-    });
+  updateSelection(previousIndex?: number) {
+    // Only update the changed elements, not all of them
+    if (previousIndex !== undefined && this.itemElements[previousIndex]) {
+      this.itemElements[previousIndex].removeClass('is-selected');
+    }
+    if (this.itemElements[this.selectedIndex]) {
+      this.itemElements[this.selectedIndex].addClass('is-selected');
+    }
 
     this.scrollToSelected();
   }
@@ -256,15 +255,17 @@ export class FolderFocusView extends ItemView {
 
   selectPrevious() {
     if (this.selectedIndex > 0) {
+      const prev = this.selectedIndex;
       this.selectedIndex--;
-      this.updateSelection();
+      this.updateSelection(prev);
     }
   }
 
   selectNext() {
     if (this.selectedIndex < this.items.length - 1) {
+      const prev = this.selectedIndex;
       this.selectedIndex++;
-      this.updateSelection();
+      this.updateSelection(prev);
     }
   }
 
