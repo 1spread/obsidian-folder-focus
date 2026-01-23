@@ -252,7 +252,7 @@ export class FolderFocusView extends ItemView {
         this.enterOrOpen();
         break;
       case 'Backspace':
-        if (event.metaKey || event.ctrlKey) {
+        if ((event.metaKey || event.ctrlKey) && this.plugin.settings.enableDeleteShortcut) {
           event.preventDefault();
           this.deleteSelected();
         }
