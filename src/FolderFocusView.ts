@@ -308,22 +308,35 @@ export class FolderFocusView extends ItemView {
   // --- Keyboard Navigation ---
 
   handleKeyDown(event: KeyboardEvent) {
+    const isMod = event.metaKey || event.ctrlKey;
+
     switch (event.key) {
       case 'ArrowUp':
-        if (!event.metaKey && !event.ctrlKey) {
-          event.preventDefault();
+        event.preventDefault();
+        if (isMod) {
+          this.navigateToParent();
+        } else {
           this.selectPrevious();
         }
         break;
       case 'ArrowDown':
-        if (!event.metaKey && !event.ctrlKey) {
-          event.preventDefault();
+        event.preventDefault();
+        if (isMod) {
+          this.enterOrOpen();
+        } else {
           this.selectNext();
         }
         break;
       case 'Enter':
         event.preventDefault();
         this.enterOrOpen();
+        break;
+      case 'n':
+      case 'N':
+        if (isMod && event.shiftKey) {
+          event.preventDefault();
+          this.createNewNote();
+        }
         break;
     }
   }

@@ -33,37 +33,23 @@ export default class FolderFocusPlugin extends Plugin {
       callback: () => this.activateView(),
     });
 
+    // Commands without default hotkeys - shortcuts are handled in the view's keydown handler
     this.addCommand({
       id: 'navigate-parent',
       name: 'Navigate to parent folder',
-      hotkeys: [{ modifiers: ['Mod'], key: 'ArrowUp' }],
-      checkCallback: (checking: boolean) => {
-        if (!this.isViewFocused()) return false;
-        if (!checking) this.getView()?.navigateToParent();
-        return true;
-      },
+      callback: () => this.getView()?.navigateToParent(),
     });
 
     this.addCommand({
       id: 'enter-folder-or-open',
       name: 'Enter folder / Open file',
-      hotkeys: [{ modifiers: ['Mod'], key: 'ArrowDown' }],
-      checkCallback: (checking: boolean) => {
-        if (!this.isViewFocused()) return false;
-        if (!checking) this.getView()?.enterOrOpen();
-        return true;
-      },
+      callback: () => this.getView()?.enterOrOpen(),
     });
 
     this.addCommand({
       id: 'create-new-note',
       name: 'Create new note in current folder',
-      hotkeys: [{ modifiers: ['Mod', 'Shift'], key: 'n' }],
-      checkCallback: (checking: boolean) => {
-        if (!this.isViewFocused()) return false;
-        if (!checking) this.getView()?.createNewNote();
-        return true;
-      },
+      callback: () => this.getView()?.createNewNote(),
     });
 
     this.addCommand({
@@ -121,14 +107,6 @@ export default class FolderFocusPlugin extends Plugin {
   getView(): FolderFocusView | null {
     const leaves = this.app.workspace.getLeavesOfType(VIEW_TYPE_FOLDER_FOCUS);
     return leaves.length > 0 ? (leaves[0].view as FolderFocusView) : null;
-  }
-
-  isViewFocused(): boolean {
-    const view = this.getView();
-    if (!view) return false;
-    // Check if the view's container or list has focus
-    const container = view.containerEl;
-    return container.contains(document.activeElement);
   }
 
   async activateView() {
