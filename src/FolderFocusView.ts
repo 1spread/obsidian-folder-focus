@@ -4,6 +4,7 @@ import type FolderFocusPlugin from './main';
 export const VIEW_TYPE_FOLDER_FOCUS = 'folder-focus-view';
 
 export type SortOrder = 'name' | 'modified' | 'created';
+export type SortDirection = 'asc' | 'desc';
 
 export class FolderFocusView extends ItemView {
   plugin: FolderFocusPlugin;
@@ -13,6 +14,7 @@ export class FolderFocusView extends ItemView {
   selectedIndex: number = 0;
   items: TAbstractFile[] = [];
   sortOrder: SortOrder = 'name';
+  sortDirection: SortDirection = 'asc';
 
   // Folder history: remembers selected item path when navigating away
   folderHistory: Map<string, string> = new Map();
@@ -96,6 +98,8 @@ export class FolderFocusView extends ItemView {
 
   getSortedChildren(folder: TFolder): TAbstractFile[] {
     const children = [...folder.children];
+    const dir = this.sortDirection === 'asc' ? 1 : -1;
+
     // Sort: folders first, then files, sorted within each group
     return children.sort((a, b) => {
       const aIsFolder = a instanceof TFolder;
@@ -104,19 +108,24 @@ export class FolderFocusView extends ItemView {
       if (!aIsFolder && bIsFolder) return 1;
 
       // Apply sort order within same type
+      let result: number;
       switch (this.sortOrder) {
         case 'modified':
           const aMtime = a instanceof TFile ? a.stat.mtime : 0;
           const bMtime = b instanceof TFile ? b.stat.mtime : 0;
-          return bMtime - aMtime; // Newest first
+          result = aMtime - bMtime;
+          break;
         case 'created':
           const aCtime = a instanceof TFile ? a.stat.ctime : 0;
           const bCtime = b instanceof TFile ? b.stat.ctime : 0;
-          return bCtime - aCtime; // Newest first
+          result = aCtime - bCtime;
+          break;
         case 'name':
         default:
-          return a.name.localeCompare(b.name);
+          result = a.name.localeCompare(b.name);
+          break;
       }
+      return result * dir;
     });
   }
 
@@ -176,6 +185,20 @@ export class FolderFocusView extends ItemView {
 
     sortSelect.addEventListener('change', () => {
       this.sortOrder = sortSelect.value as SortOrder;
+      this.items = this.getSortedChildren(this.currentFolder!);
+      this.selectedIndex = 0;
+      this.renderList();
+    });
+
+    // Sort direction toggle button
+    const dirBtn = sortEl.createEl('button', { cls: 'folder-focus-sort-dir' });
+    dirBtn.innerHTML = this.sortDirection === 'asc' ? this.getAscIcon() : this.getDescIcon();
+    dirBtn.setAttribute('aria-label', this.sortDirection === 'asc' ? 'Ascending' : 'Descending');
+
+    dirBtn.addEventListener('click', () => {
+      this.sortDirection = this.sortDirection === 'asc' ? 'desc' : 'asc';
+      dirBtn.innerHTML = this.sortDirection === 'asc' ? this.getAscIcon() : this.getDescIcon();
+      dirBtn.setAttribute('aria-label', this.sortDirection === 'asc' ? 'Ascending' : 'Descending');
       this.items = this.getSortedChildren(this.currentFolder!);
       this.selectedIndex = 0;
       this.renderList();
@@ -272,6 +295,14 @@ export class FolderFocusView extends ItemView {
 
   getFileIcon(): string {
     return '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>';
+  }
+
+  getAscIcon(): string {
+    return '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12l7-7 7 7"/></svg>';
+  }
+
+  getDescIcon(): string {
+    return '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12l7 7 7-7"/></svg>';
   }
 
   // --- Keyboard Navigation ---
