@@ -41,7 +41,6 @@ A Finder-like folder navigation view for [Obsidian](https://obsidian.md).
 | `⌘↑` / `Ctrl+↑` | Navigate to parent folder |
 | `⌘↓` / `Ctrl+↓` | Enter folder / Open file |
 | `⇧⌘N` / `Ctrl+Shift+N` | Create new note in current folder |
-| `⌘⌫` / `Ctrl+Backspace` | Delete selected file/folder |
 | `↑` / `↓` | Move selection up/down |
 | `Enter` | Enter folder / Open file |
 
@@ -60,7 +59,6 @@ All commands are available via the command palette (`⌘P` / `Ctrl+P`):
 - **Navigate to parent folder** - Go up one level
 - **Enter folder / Open file** - Enter selected folder or open selected file
 - **Create new note in current folder** - Creates a new note
-- **Delete selected file/folder** - Moves selection to trash
 
 ## Development
 

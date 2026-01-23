@@ -1,4 +1,4 @@
-import { ItemView, WorkspaceLeaf, TFile, TFolder, TAbstractFile, Notice } from 'obsidian';
+import { ItemView, WorkspaceLeaf, TFile, TFolder, TAbstractFile } from 'obsidian';
 import type FolderFocusPlugin from './main';
 
 export const VIEW_TYPE_FOLDER_FOCUS = 'folder-focus-view';
@@ -251,12 +251,6 @@ export class FolderFocusView extends ItemView {
         event.preventDefault();
         this.enterOrOpen();
         break;
-      case 'Backspace':
-        if ((event.metaKey || event.ctrlKey) && this.plugin.settings.enableDeleteShortcut) {
-          event.preventDefault();
-          this.deleteSelected();
-        }
-        break;
     }
   }
 
@@ -342,86 +336,5 @@ export class FolderFocusView extends ItemView {
 
     // Refresh and select the new file
     this.setFolder(this.currentFolder, newFile.path);
-  }
-
-  async deleteSelected() {
-    const selected = this.items[this.selectedIndex];
-    if (!selected) return;
-
-    const isFolder = selected instanceof TFolder;
-    const typeName = isFolder ? 'folder' : 'file';
-
-    // Confirm deletion
-    const confirmed = await this.confirmDelete(selected.name, typeName);
-    if (!confirmed) return;
-
-    try {
-      // Move to trash
-      await this.app.vault.trash(selected, true);
-      new Notice(`Moved "${selected.name}" to trash`);
-
-      // Refresh the view
-      if (this.currentFolder) {
-        // Adjust selection if needed
-        const newIndex = Math.min(this.selectedIndex, this.items.length - 2);
-        this.setFolder(this.currentFolder);
-        this.selectedIndex = Math.max(0, newIndex);
-        this.updateSelection();
-      }
-    } catch (error) {
-      new Notice(`Failed to delete: ${error}`);
-    }
-  }
-
-  async confirmDelete(name: string, type: string): Promise<boolean> {
-    return new Promise((resolve) => {
-      const modal = new ConfirmDeleteModal(this.app, name, type, resolve);
-      modal.open();
-    });
-  }
-}
-
-// Simple confirmation modal for deletion
-import { Modal, App } from 'obsidian';
-
-class ConfirmDeleteModal extends Modal {
-  name: string;
-  type: string;
-  resolve: (value: boolean) => void;
-
-  constructor(app: App, name: string, type: string, resolve: (value: boolean) => void) {
-    super(app);
-    this.name = name;
-    this.type = type;
-    this.resolve = resolve;
-  }
-
-  onOpen() {
-    const { contentEl } = this;
-    contentEl.empty();
-
-    contentEl.createEl('h3', { text: `Delete ${this.type}?` });
-    contentEl.createEl('p', { text: `Are you sure you want to move "${this.name}" to trash?` });
-
-    const buttonContainer = contentEl.createDiv({ cls: 'modal-button-container' });
-
-    const cancelBtn = buttonContainer.createEl('button', { text: 'Cancel' });
-    cancelBtn.addEventListener('click', () => {
-      this.resolve(false);
-      this.close();
-    });
-
-    const deleteBtn = buttonContainer.createEl('button', {
-      text: 'Delete',
-      cls: 'mod-warning',
-    });
-    deleteBtn.addEventListener('click', () => {
-      this.resolve(true);
-      this.close();
-    });
-  }
-
-  onClose() {
-    this.contentEl.empty();
   }
 }

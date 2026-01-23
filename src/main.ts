@@ -3,12 +3,10 @@ import { FolderFocusView, VIEW_TYPE_FOLDER_FOCUS } from './FolderFocusView';
 
 interface FolderFocusSettings {
   openInNewTab: boolean;
-  enableDeleteShortcut: boolean;
 }
 
 const DEFAULT_SETTINGS: FolderFocusSettings = {
   openInNewTab: true,
-  enableDeleteShortcut: false,
 };
 
 export default class FolderFocusPlugin extends Plugin {
@@ -62,17 +60,6 @@ export default class FolderFocusPlugin extends Plugin {
       callback: async () => {
         await this.activateView();
         this.getView()?.revealActiveFile();
-      },
-    });
-
-    this.addCommand({
-      id: 'delete-selected',
-      name: 'Delete selected file/folder',
-      hotkeys: [{ modifiers: ['Mod'], key: 'Backspace' }],
-      callback: () => {
-        if (this.settings.enableDeleteShortcut) {
-          this.getView()?.deleteSelected();
-        }
       },
     });
 
@@ -193,18 +180,6 @@ class FolderFocusSettingTab extends PluginSettingTab {
           .setValue(this.plugin.settings.openInNewTab)
           .onChange(async (value) => {
             this.plugin.settings.openInNewTab = value;
-            await this.plugin.saveSettings();
-          })
-      );
-
-    new Setting(containerEl)
-      .setName('Enable delete shortcut (⌘⌫)')
-      .setDesc('When enabled, Cmd+Backspace will delete the selected file/folder. Disabled by default for safety.')
-      .addToggle((toggle) =>
-        toggle
-          .setValue(this.plugin.settings.enableDeleteShortcut)
-          .onChange(async (value) => {
-            this.plugin.settings.enableDeleteShortcut = value;
             await this.plugin.saveSettings();
           })
       );
