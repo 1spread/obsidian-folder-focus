@@ -37,21 +37,33 @@ export default class FolderFocusPlugin extends Plugin {
       id: 'navigate-parent',
       name: 'Navigate to parent folder',
       hotkeys: [{ modifiers: ['Mod'], key: 'ArrowUp' }],
-      callback: () => this.getView()?.navigateToParent(),
+      checkCallback: (checking: boolean) => {
+        if (!this.isViewFocused()) return false;
+        if (!checking) this.getView()?.navigateToParent();
+        return true;
+      },
     });
 
     this.addCommand({
       id: 'enter-folder-or-open',
       name: 'Enter folder / Open file',
       hotkeys: [{ modifiers: ['Mod'], key: 'ArrowDown' }],
-      callback: () => this.getView()?.enterOrOpen(),
+      checkCallback: (checking: boolean) => {
+        if (!this.isViewFocused()) return false;
+        if (!checking) this.getView()?.enterOrOpen();
+        return true;
+      },
     });
 
     this.addCommand({
       id: 'create-new-note',
       name: 'Create new note in current folder',
       hotkeys: [{ modifiers: ['Mod', 'Shift'], key: 'n' }],
-      callback: () => this.getView()?.createNewNote(),
+      checkCallback: (checking: boolean) => {
+        if (!this.isViewFocused()) return false;
+        if (!checking) this.getView()?.createNewNote();
+        return true;
+      },
     });
 
     this.addCommand({
@@ -109,6 +121,14 @@ export default class FolderFocusPlugin extends Plugin {
   getView(): FolderFocusView | null {
     const leaves = this.app.workspace.getLeavesOfType(VIEW_TYPE_FOLDER_FOCUS);
     return leaves.length > 0 ? (leaves[0].view as FolderFocusView) : null;
+  }
+
+  isViewFocused(): boolean {
+    const view = this.getView();
+    if (!view) return false;
+    // Check if the view's container or list has focus
+    const container = view.containerEl;
+    return container.contains(document.activeElement);
   }
 
   async activateView() {
