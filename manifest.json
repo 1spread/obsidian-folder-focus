@@ -1,0 +1,9 @@
+{
+  "id": "obsidian-folder-focus",
+  "name": "Folder Focus",
+  "version": "1.0.0",
+  "minAppVersion": "0.15.0",
+  "description": "Finder-like folder navigation view in the sidebar",
+  "author": "das",
+  "isDesktopOnly": false
+}
