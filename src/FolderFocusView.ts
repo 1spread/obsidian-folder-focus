@@ -175,23 +175,22 @@ export class FolderFocusView extends ItemView {
         chevronEl.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>';
       }
 
-      // Click handler - different behavior for files vs folders
+      // Click handler - select only
       itemEl.addEventListener('click', () => {
         this.selectedIndex = index;
         this.updateSelection();
+        this.listEl.focus();
+      });
 
-        // Single click opens files immediately
-        if (!isFolder) {
+      // Double-click handler - enter folder or open file
+      itemEl.addEventListener('dblclick', () => {
+        this.selectedIndex = index;
+        if (isFolder) {
+          this.enterFolder(item as TFolder);
+        } else {
           this.openFile(item as TFile);
         }
       });
-
-      // Double-click handler - only for folders
-      if (isFolder) {
-        itemEl.addEventListener('dblclick', () => {
-          this.enterFolder(item as TFolder);
-        });
-      }
 
       this.itemElements.push(itemEl);
     });
@@ -301,7 +300,9 @@ export class FolderFocusView extends ItemView {
   }
 
   openFile(file: TFile) {
-    const leaf = this.app.workspace.getLeaf('tab');
+    // Respect the "open in new tab" setting
+    const openInNewTab = this.plugin.settings.openInNewTab;
+    const leaf = this.app.workspace.getLeaf(openInNewTab ? 'tab' : false);
     leaf.openFile(file);
   }
 
@@ -335,7 +336,8 @@ export class FolderFocusView extends ItemView {
       : fileName;
 
     const newFile = await this.app.vault.create(filePath, '');
-    const leaf = this.app.workspace.getLeaf('tab');
+    const openInNewTab = this.plugin.settings.openInNewTab;
+    const leaf = this.app.workspace.getLeaf(openInNewTab ? 'tab' : false);
     await leaf.openFile(newFile);
 
     // Refresh and select the new file
