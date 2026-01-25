@@ -1,5 +1,33 @@
 # Changelog
 
+## 2026-01-25
+
+### Added
+- **Multi-selection**: Cmd+Click to toggle, Shift+Click for range selection
+- **New folder button**: Create folders directly from header
+- **New note button**: Create notes directly from header
+- **Search improvements**:
+  - Full-text search (searches file content)
+  - Subfolder search (includes all nested files)
+  - "Folders only" filter toggle
+  - Clear button (×) in search box
+- **Context menu enhancements**:
+  - Rename folder option
+  - Delete folder option
+  - Create folder with selection
+- **Cmd+Enter**: Open file in new tab
+- **Cmd+Double-click**: Open file in new tab
+- **Live refresh**: Automatically updates when files change externally (Finder, etc.)
+
+### Changed
+- Search now requires Enter key to execute (not real-time)
+- Selection styling improved with focus indicator
+
+### Removed
+- Drag and drop functionality (removed for simplicity)
+
+---
+
 ## 2026-01-23
 
 ### Added

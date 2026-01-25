@@ -81,14 +81,7 @@ export default class FolderFocusPlugin extends Plugin {
       })
     );
 
-    // 5. Listen for active file changes to sync view
-    this.registerEvent(
-      this.app.workspace.on('file-open', (file) => {
-        if (file) this.getView()?.syncToFile(file);
-      })
-    );
-
-    // 6. Add settings tab
+    // 5. Add settings tab
     this.addSettingTab(new FolderFocusSettingTab(this.app, this));
   }
 
@@ -123,12 +116,6 @@ export default class FolderFocusPlugin extends Plugin {
 
     if (leaf) {
       workspace.revealLeaf(leaf);
-
-      // Sync to current file on open
-      const activeFile = workspace.getActiveFile();
-      if (activeFile) {
-        this.getView()?.syncToFile(activeFile);
-      }
     }
   }
 }
@@ -152,22 +139,52 @@ class FolderFocusSettingTab extends PluginSettingTab {
       cls: 'setting-item-description',
     });
 
-    containerEl.createEl('h3', { text: 'Usage' });
-
-    const usageEl = containerEl.createEl('div', { cls: 'folder-focus-usage' });
-    usageEl.innerHTML = `
+    // Features section
+    containerEl.createEl('h3', { text: 'Features' });
+    const featuresEl = containerEl.createEl('div', { cls: 'folder-focus-usage' });
+    featuresEl.innerHTML = `
       <ul>
-        <li><strong>Open view:</strong> Click the folder icon in the left ribbon, or right-click a folder → "Open in Folder Focus"</li>
-        <li><strong>⌘↑ (Cmd+Up):</strong> Navigate to parent folder</li>
-        <li><strong>⌘↓ (Cmd+Down):</strong> Enter folder / Open file</li>
-        <li><strong>⇧⌘N (Shift+Cmd+N):</strong> Create new note in current folder</li>
-        <li><strong>⌘⌫ (Cmd+Backspace):</strong> Delete selected file/folder</li>
-        <li><strong>↑/↓:</strong> Move selection up/down</li>
-        <li><strong>Single click:</strong> Select folder / Open file</li>
-        <li><strong>Double click:</strong> Enter folder</li>
+        <li><strong>Multi-selection:</strong> Cmd+Click to toggle, Shift+Click for range</li>
+        <li><strong>Full-text search:</strong> Search file names and content in subfolders</li>
+        <li><strong>Folders only filter:</strong> Toggle to show only folders in search</li>
+        <li><strong>Live refresh:</strong> Automatically updates when files change externally</li>
+        <li><strong>Context menu:</strong> Rename, Delete, Create folder with selection</li>
+        <li><strong>New folder/note buttons:</strong> Quick creation from header</li>
       </ul>
     `;
 
+    // Keyboard shortcuts section
+    containerEl.createEl('h3', { text: 'Keyboard Shortcuts' });
+    const usageEl = containerEl.createEl('div', { cls: 'folder-focus-usage' });
+    usageEl.innerHTML = `
+      <ul>
+        <li><strong>↑/↓:</strong> Move selection</li>
+        <li><strong>Shift+↑/↓:</strong> Extend selection</li>
+        <li><strong>⌘+A:</strong> Select all</li>
+        <li><strong>⌘+↑:</strong> Navigate to parent folder</li>
+        <li><strong>⌘+↓:</strong> Enter folder / Open file</li>
+        <li><strong>Enter:</strong> Enter folder / Open file</li>
+        <li><strong>⌘+Enter:</strong> Open file in new tab</li>
+        <li><strong>⇧⌘+N:</strong> Create new note</li>
+        <li><strong>Escape:</strong> Clear search / Collapse selection</li>
+      </ul>
+    `;
+
+    // Mouse actions section
+    containerEl.createEl('h3', { text: 'Mouse Actions' });
+    const mouseEl = containerEl.createEl('div', { cls: 'folder-focus-usage' });
+    mouseEl.innerHTML = `
+      <ul>
+        <li><strong>Click:</strong> Select item</li>
+        <li><strong>Cmd+Click:</strong> Toggle selection (multi-select)</li>
+        <li><strong>Shift+Click:</strong> Range selection</li>
+        <li><strong>Double-click:</strong> Enter folder / Open file</li>
+        <li><strong>Cmd+Double-click:</strong> Open file in new tab</li>
+        <li><strong>Right-click:</strong> Context menu</li>
+      </ul>
+    `;
+
+    // Options section
     containerEl.createEl('h3', { text: 'Options' });
 
     new Setting(containerEl)
