@@ -516,6 +516,96 @@ export class FolderFocusView extends ItemView {
         menu.showAtMouseEvent(event);
       });
 
+      // Drag and drop - make item draggable
+      itemEl.setAttribute('draggable', 'true');
+
+      itemEl.addEventListener('dragstart', (event: DragEvent) => {
+        // If dragged item is not selected, select only it
+        if (!this.selectedIndices.has(index)) {
+          this.selectedIndices.clear();
+          this.selectedIndices.add(index);
+          this.anchorIndex = index;
+          this.focusIndex = index;
+          this.updateSelection();
+        }
+
+        // Store selected item paths in DataTransfer
+        const selectedPaths = Array.from(this.selectedIndices)
+          .map(i => this.filteredItems[i]?.path)
+          .filter(Boolean) as string[];
+
+        event.dataTransfer?.setData('application/json', JSON.stringify({
+          type: 'folder-focus-items',
+          paths: selectedPaths
+        }));
+        event.dataTransfer!.effectAllowed = 'move';
+
+        // Add visual feedback
+        this.selectedIndices.forEach(i => {
+          this.itemElements[i]?.addClass('is-dragging');
+        });
+      });
+
+      itemEl.addEventListener('dragend', () => {
+        // Clean up drag visual state
+        this.itemElements.forEach(el => {
+          el.removeClass('is-dragging');
+          el.removeClass('is-drop-target');
+          el.removeClass('is-drop-invalid');
+        });
+      });
+
+      // Drop target events - only for folders
+      if (isFolder) {
+        itemEl.addEventListener('dragover', (event: DragEvent) => {
+          event.preventDefault();
+
+          const dragData = this.getDragData(event);
+          if (!dragData) return;
+
+          const targetFolder = item as TFolder;
+          const isInvalidTarget = this.isInvalidDropTarget(dragData.paths, targetFolder);
+
+          if (isInvalidTarget) {
+            event.dataTransfer!.dropEffect = 'none';
+            itemEl.removeClass('is-drop-target');
+            itemEl.addClass('is-drop-invalid');
+          } else {
+            event.dataTransfer!.dropEffect = 'move';
+            itemEl.addClass('is-drop-target');
+            itemEl.removeClass('is-drop-invalid');
+          }
+        });
+
+        itemEl.addEventListener('dragenter', (event: DragEvent) => {
+          event.preventDefault();
+        });
+
+        itemEl.addEventListener('dragleave', (event: DragEvent) => {
+          if (!itemEl.contains(event.relatedTarget as Node)) {
+            itemEl.removeClass('is-drop-target');
+            itemEl.removeClass('is-drop-invalid');
+          }
+        });
+
+        itemEl.addEventListener('drop', async (event: DragEvent) => {
+          event.preventDefault();
+          itemEl.removeClass('is-drop-target');
+          itemEl.removeClass('is-drop-invalid');
+
+          const dragData = this.getDragData(event);
+          if (!dragData) return;
+
+          const targetFolder = item as TFolder;
+
+          if (this.isInvalidDropTarget(dragData.paths, targetFolder)) {
+            return;
+          }
+
+          await this.moveItemsToFolder(dragData.paths, targetFolder);
+        });
+      }
+
       this.itemElements.push(itemEl);
     });
 
@@ -885,6 +975,82 @@ export class FolderFocusView extends ItemView {
       });
       modal.open();
     });
+  }
+
+  // --- Drag and Drop helpers ---
+
+  private getDragData(event: DragEvent): { type: string; paths: string[] } | null {
+    try {
+      const data = event.dataTransfer?.getData('application/json');
+      if (!data) return null;
+      const parsed = JSON.parse(data);
+      if (parsed.type !== 'folder-focus-items' || !Array.isArray(parsed.paths)) {
+        return null;
+      }
+      return parsed;
+    } catch {
+      return null;
+    }
+  }
+
+  private isInvalidDropTarget(sourcePaths: string[], targetFolder: TFolder): boolean {
+    for (const sourcePath of sourcePaths) {
+      // Cannot drop on itself
+      if (sourcePath === targetFolder.path) {
+        return true;
+      }
+
+      const sourceFile = this.app.vault.getAbstractFileByPath(sourcePath);
+
+      // Already in target folder
+      if (sourceFile?.parent?.path === targetFolder.path) {
+        return true;
+      }
+
+      // Cannot drop folder into its own descendant (circular reference)
+      if (sourceFile instanceof TFolder) {
+        if (targetFolder.path.startsWith(sourcePath + '/')) {
+          return true;
+        }
+      }
+
+      // Check for name conflict
+      const sourceFileName = sourceFile?.name;
+      if (sourceFileName) {
+        const existingPath = targetFolder.path
+          ? `${targetFolder.path}/${sourceFileName}`
+          : sourceFileName;
+        if (this.app.vault.getAbstractFileByPath(existingPath)) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  private async moveItemsToFolder(sourcePaths: string[], targetFolder: TFolder): Promise<void> {
+    for (const sourcePath of sourcePaths) {
+      const sourceFile = this.app.vault.getAbstractFileByPath(sourcePath);
+      if (!sourceFile) continue;
+
+      const newPath = targetFolder.path
+        ? `${targetFolder.path}/${sourceFile.name}`
+        : sourceFile.name;
+
+      try {
+        await this.app.fileManager.renameFile(sourceFile, newPath);
+      } catch (error) {
+        console.error(`Failed to move ${sourcePath}:`, error);
+      }
+    }
+
+    // Clear selection after move
+    this.selectedIndices.clear();
+    if (this.filteredItems.length > 0) {
+      this.selectedIndices.add(0);
+    }
+    this.anchorIndex = 0;
+    this.focusIndex = 0;
   }
 }
 

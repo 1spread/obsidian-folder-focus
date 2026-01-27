@@ -343,3 +343,24 @@
 .folder-focus-toggle-label:hover {
   color: var(--text-normal);
 }
+
+/* Drag and drop */
+.folder-focus-item.is-dragging {
+  opacity: 0.5;
+}
+
+.folder-focus-item.is-drop-target {
+  background: var(--interactive-accent);
+  color: var(--text-on-accent);
+}
+
+.folder-focus-item.is-drop-target .folder-focus-item-icon,
+.folder-focus-item.is-drop-target .folder-focus-item-name,
+.folder-focus-item.is-drop-target .folder-focus-item-chevron {
+  color: var(--text-on-accent);
+}
+
+.folder-focus-item.is-drop-invalid {
+  background: var(--background-modifier-error);
+  opacity: 0.7;
+}
