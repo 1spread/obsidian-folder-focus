@@ -499,6 +499,16 @@ export class FolderFocusView extends ItemView {
           });
 
           menu.addSeparator();
+        } else {
+          // File-specific options
+          menu.addItem((menuItem) => {
+            menuItem
+              .setTitle('Delete file')
+              .setIcon('trash')
+              .onClick(() => this.deleteItem(item));
+          });
+
+          menu.addSeparator();
         }
 
         // Custom item: Create folder with selection
