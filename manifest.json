@@ -1,9 +1,11 @@
 {
-  "id": "obsidian-folder-focus",
+  "id": "folder-focus",
   "name": "Folder Focus",
   "version": "1.0.0",
   "minAppVersion": "0.15.0",
-  "description": "Finder-like folder navigation view in the sidebar",
+  "description": "Finder-like folder navigation view in the sidebar.",
   "author": "das",
-  "isDesktopOnly": false
+  "authorUrl": "https://github.com/1spread",
+  "isDesktopOnly": false,
+  "fundingUrl": "https://buymeacoffee.com/1spread"
 }

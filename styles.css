@@ -308,18 +308,103 @@
   opacity: 1;
 }
 
-/* Settings page */
-.folder-focus-usage ul {
+/* Settings page - How to Use */
+.folder-focus-howto {
+  margin-bottom: 16px;
+}
+
+.folder-focus-howto h3 {
+  margin: 0 0 8px;
+  font-size: 14px;
+}
+
+.folder-focus-howto ol {
   padding-left: 20px;
-  line-height: 1.8;
+  margin: 0;
 }
 
-.folder-focus-usage li {
-  margin-bottom: 4px;
+.folder-focus-howto li {
+  font-size: 13px;
+  color: var(--text-muted);
+  line-height: 1.6;
+  margin-bottom: 6px;
 }
 
-.folder-focus-usage strong {
+.folder-focus-howto li strong {
   color: var(--text-normal);
+}
+
+.folder-focus-section-heading {
+  font-size: 14px;
+  margin: 16px 0 4px;
+}
+
+/* Settings page - collapsible sections */
+.folder-focus-details {
+  margin-top: 16px;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.folder-focus-details summary {
+  padding: 10px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-normal);
+  cursor: pointer;
+  background: var(--background-secondary);
+}
+
+.folder-focus-details summary:hover {
+  background: var(--background-modifier-hover);
+}
+
+.folder-focus-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+
+.folder-focus-table tr {
+  border-top: 1px solid var(--background-modifier-border);
+}
+
+.folder-focus-table td {
+  padding: 6px 14px;
+  color: var(--text-muted);
+}
+
+.folder-focus-key {
+  font-family: var(--font-monospace);
+  font-weight: 500;
+  color: var(--text-normal) !important;
+  white-space: nowrap;
+  width: 40%;
+}
+
+/* Settings page - Buy Me a Coffee */
+.folder-focus-support {
+  margin-top: 24px;
+  padding-top: 16px;
+  border-top: 1px solid var(--background-modifier-border);
+  text-align: center;
+}
+
+.folder-focus-support p {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-bottom: 10px;
+}
+
+.folder-focus-bmc-img {
+  height: 40px;
+  border-radius: 6px;
+  transition: opacity 0.2s ease;
+}
+
+.folder-focus-bmc-img:hover {
+  opacity: 0.85;
 }
 
 /* Search toggle */

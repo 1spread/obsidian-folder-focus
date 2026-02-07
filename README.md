@@ -129,6 +129,12 @@ npm run dev
 npm run build
 ```
 
+## Support
+
+If you find this plugin helpful, consider supporting its development:
+
+<a href="https://buymeacoffee.com/1spread"><img src="https://img.buymeacoffee.com/button-api/?text=Buy me a coffee&emoji=☕&slug=1spread&button_colour=FFDD00&font_colour=000000&font_family=Cookie&outline_colour=000000&coffee_colour=ffffff" /></a>
+
 ## License
 
 MIT License - see [LICENSE](LICENSE) for details.

@@ -1,4 +1,4 @@
-import { ItemView, WorkspaceLeaf, TFile, TFolder, TAbstractFile, Menu, Modal, App } from 'obsidian';
+import { ItemView, WorkspaceLeaf, TFile, TFolder, TAbstractFile, Menu, Modal, App, setIcon } from 'obsidian';
 import type FolderFocusPlugin from './main';
 
 export const VIEW_TYPE_FOLDER_FOCUS = 'folder-focus-view';
@@ -241,12 +241,13 @@ export class FolderFocusView extends ItemView {
 
     // Sort direction toggle button
     const dirBtn = sortEl.createEl('button', { cls: 'folder-focus-sort-dir' });
-    dirBtn.innerHTML = this.sortDirection === 'asc' ? this.getAscIcon() : this.getDescIcon();
+    setIcon(dirBtn, this.sortDirection === 'asc' ? 'arrow-up' : 'arrow-down');
     dirBtn.setAttribute('aria-label', this.sortDirection === 'asc' ? 'Ascending' : 'Descending');
 
     dirBtn.addEventListener('click', async () => {
       this.sortDirection = this.sortDirection === 'asc' ? 'desc' : 'asc';
-      dirBtn.innerHTML = this.sortDirection === 'asc' ? this.getAscIcon() : this.getDescIcon();
+      dirBtn.empty();
+      setIcon(dirBtn, this.sortDirection === 'asc' ? 'arrow-up' : 'arrow-down');
       dirBtn.setAttribute('aria-label', this.sortDirection === 'asc' ? 'Ascending' : 'Descending');
       this.items = this.getSortedChildren(this.currentFolder!);
       await this.applyFilter();
@@ -255,13 +256,13 @@ export class FolderFocusView extends ItemView {
 
     // New folder button
     const newFolderBtn = sortEl.createEl('button', { cls: 'folder-focus-new-folder' });
-    newFolderBtn.innerHTML = this.getNewFolderIcon();
+    setIcon(newFolderBtn, 'folder-plus');
     newFolderBtn.setAttribute('aria-label', 'New folder');
     newFolderBtn.addEventListener('click', () => this.createNewFolder());
 
     // New note button
     const newNoteBtn = sortEl.createEl('button', { cls: 'folder-focus-new-note' });
-    newNoteBtn.innerHTML = this.getNewNoteIcon();
+    setIcon(newNoteBtn, 'file-plus');
     newNoteBtn.setAttribute('aria-label', 'New note');
     newNoteBtn.addEventListener('click', () => this.createNewNote());
 
@@ -281,7 +282,7 @@ export class FolderFocusView extends ItemView {
 
     // Clear button
     const clearBtn = searchWrapper.createEl('button', { cls: 'folder-focus-search-clear' });
-    clearBtn.innerHTML = this.getClearIcon();
+    setIcon(clearBtn, 'x');
     clearBtn.setAttribute('aria-label', 'Clear search');
     clearBtn.style.display = this.searchQuery ? 'flex' : 'none';
 
@@ -403,11 +404,7 @@ export class FolderFocusView extends ItemView {
 
       // Icon
       const iconEl = itemEl.createSpan({ cls: 'folder-focus-item-icon' });
-      if (isFolder) {
-        iconEl.innerHTML = this.getFolderIcon();
-      } else {
-        iconEl.innerHTML = this.getFileIcon();
-      }
+      setIcon(iconEl, isFolder ? 'folder' : 'file');
 
       // Name
       const nameEl = itemEl.createSpan({ cls: 'folder-focus-item-name' });
@@ -416,7 +413,7 @@ export class FolderFocusView extends ItemView {
       // Chevron for folders
       if (isFolder) {
         const chevronEl = itemEl.createSpan({ cls: 'folder-focus-item-chevron' });
-        chevronEl.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>';
+        setIcon(chevronEl, 'chevron-right');
       }
 
       // Click handler - select with modifier key support
@@ -510,6 +507,23 @@ export class FolderFocusView extends ItemView {
 
           menu.addSeparator();
         }
+
+        // Copy path(s)
+        const selectedItems = Array.from(this.selectedIndices)
+          .map(i => this.filteredItems[i])
+          .filter(Boolean);
+        const copyItems = selectedItems.length > 1 ? selectedItems : [item];
+        menu.addItem((menuItem) => {
+          menuItem
+            .setTitle(copyItems.length > 1 ? `Copy paths (${copyItems.length})` : 'Copy path')
+            .setIcon('copy')
+            .onClick(async () => {
+              const paths = copyItems.map(i => i.path).join('\n');
+              await navigator.clipboard.writeText(paths);
+            });
+        });
+
+        menu.addSeparator();
 
         // Custom item: Create folder with selection
         menu.addItem((menuItem) => {
@@ -639,34 +653,6 @@ export class FolderFocusView extends ItemView {
       // Use scrollIntoView with 'nearest' to minimize scrolling
       focusedEl.scrollIntoView({ block: 'nearest', behavior: 'auto' });
     }
-  }
-
-  getFolderIcon(): string {
-    return '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>';
-  }
-
-  getFileIcon(): string {
-    return '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>';
-  }
-
-  getAscIcon(): string {
-    return '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12l7-7 7 7"/></svg>';
-  }
-
-  getDescIcon(): string {
-    return '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12l7 7 7-7"/></svg>';
-  }
-
-  getNewFolderIcon(): string {
-    return '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/><line x1="12" y1="11" x2="12" y2="17"/><line x1="9" y1="14" x2="15" y2="14"/></svg>';
-  }
-
-  getNewNoteIcon(): string {
-    return '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>';
-  }
-
-  getClearIcon(): string {
-    return '<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>';
   }
 
   // --- Keyboard Navigation ---
