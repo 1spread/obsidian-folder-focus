@@ -195,6 +195,10 @@
   outline: none;
 }
 
+.folder-focus-search-clear.is-hidden {
+  display: none;
+}
+
 .folder-focus-search-clear:hover {
   background: var(--background-modifier-border);
   color: var(--text-normal);
@@ -313,11 +317,6 @@
   margin-bottom: 16px;
 }
 
-.folder-focus-howto h3 {
-  margin: 0 0 8px;
-  font-size: 14px;
-}
-
 .folder-focus-howto ol {
   padding-left: 20px;
   margin: 0;
@@ -332,11 +331,6 @@
 
 .folder-focus-howto li strong {
   color: var(--text-normal);
-}
-
-.folder-focus-section-heading {
-  font-size: 14px;
-  margin: 16px 0 4px;
 }
 
 /* Settings page - collapsible sections */
@@ -448,4 +442,16 @@
 .folder-focus-item.is-drop-invalid {
   background: var(--background-modifier-error);
   opacity: 0.7;
+}
+
+/* Rename modal */
+.folder-focus-modal-title {
+  font-size: 14px;
+  font-weight: 600;
+  margin: 0 0 10px;
+}
+
+.folder-focus-modal-input {
+  width: 100%;
+  margin-bottom: 1em;
 }

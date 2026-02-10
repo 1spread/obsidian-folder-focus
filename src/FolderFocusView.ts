@@ -45,14 +45,14 @@ export class FolderFocusView extends ItemView {
   }
 
   getDisplayText(): string {
-    return 'Folder Focus';
+    return 'Folder focus';
   }
 
   getIcon(): string {
     return 'folder';
   }
 
-  async onOpen() {
+  onOpen(): Promise<void> {
     const container = this.contentEl;
     container.empty();
     container.addClass('folder-focus-container');
@@ -70,7 +70,9 @@ export class FolderFocusView extends ItemView {
     this.registerEvent(
       this.app.vault.on('create', (file) => {
         if (this.isInCurrentFolder(file)) {
-          this.refreshCurrentFolder();
+          void this.refreshCurrentFolder().catch((e) => {
+            console.error('Folder focus: failed to refresh after create', e);
+          });
         }
       })
     );
@@ -78,7 +80,9 @@ export class FolderFocusView extends ItemView {
     this.registerEvent(
       this.app.vault.on('delete', (file) => {
         if (this.isInCurrentFolder(file)) {
-          this.refreshCurrentFolder();
+          void this.refreshCurrentFolder().catch((e) => {
+            console.error('Folder focus: failed to refresh after delete', e);
+          });
         }
       })
     );
@@ -86,7 +90,9 @@ export class FolderFocusView extends ItemView {
     this.registerEvent(
       this.app.vault.on('rename', (file, oldPath) => {
         if (this.isInCurrentFolder(file) || this.wasInCurrentFolder(oldPath)) {
-          this.refreshCurrentFolder();
+          void this.refreshCurrentFolder().catch((e) => {
+            console.error('Folder focus: failed to refresh after rename', e);
+          });
         }
       })
     );
@@ -99,11 +105,15 @@ export class FolderFocusView extends ItemView {
       // Fallback to vault root
       this.setFolder(this.app.vault.getRoot());
     }
+
+    return Promise.resolve();
   }
 
-  async onClose() {
+  onClose(): Promise<void> {
     // Cleanup
     this.folderHistory.clear();
+
+    return Promise.resolve();
   }
 
   // --- State Management ---
@@ -156,16 +166,18 @@ export class FolderFocusView extends ItemView {
       // Apply sort order within same type
       let result: number;
       switch (this.sortOrder) {
-        case 'modified':
+        case 'modified': {
           const aMtime = a instanceof TFile ? a.stat.mtime : 0;
           const bMtime = b instanceof TFile ? b.stat.mtime : 0;
           result = aMtime - bMtime;
           break;
-        case 'created':
+        }
+        case 'created': {
           const aCtime = a instanceof TFile ? a.stat.ctime : 0;
           const bCtime = b instanceof TFile ? b.stat.ctime : 0;
           result = aCtime - bCtime;
           break;
+        }
         case 'name':
         default:
           result = a.name.localeCompare(b.name);
@@ -213,7 +225,7 @@ export class FolderFocusView extends ItemView {
     const topRow = this.headerEl.createDiv({ cls: 'folder-focus-header-top' });
 
     const nameEl = topRow.createDiv({ cls: 'folder-focus-name' });
-    nameEl.setText(this.currentFolder.name || 'Vault Root');
+    nameEl.setText(this.currentFolder.name || 'Vault root');
 
     // Sort dropdown
     const sortEl = topRow.createDiv({ cls: 'folder-focus-sort' });
@@ -232,11 +244,20 @@ export class FolderFocusView extends ItemView {
       }
     });
 
-    sortSelect.addEventListener('change', async () => {
-      this.sortOrder = sortSelect.value as SortOrder;
-      this.items = this.getSortedChildren(this.currentFolder!);
-      await this.applyFilter();
-      this.renderList();
+    sortSelect.addEventListener('change', () => {
+      // Keep the listener synchronous; ignore unknown values safely.
+      void (async () => {
+        const v = sortSelect.value;
+        if (v === 'name' || v === 'modified' || v === 'created') {
+          this.sortOrder = v;
+        }
+        if (!this.currentFolder) return;
+        this.items = this.getSortedChildren(this.currentFolder);
+        await this.applyFilter();
+        this.renderList();
+      })().catch((e) => {
+        console.error('Folder focus: failed to change sort order', e);
+      });
     });
 
     // Sort direction toggle button
@@ -244,27 +265,40 @@ export class FolderFocusView extends ItemView {
     setIcon(dirBtn, this.sortDirection === 'asc' ? 'arrow-up' : 'arrow-down');
     dirBtn.setAttribute('aria-label', this.sortDirection === 'asc' ? 'Ascending' : 'Descending');
 
-    dirBtn.addEventListener('click', async () => {
-      this.sortDirection = this.sortDirection === 'asc' ? 'desc' : 'asc';
-      dirBtn.empty();
-      setIcon(dirBtn, this.sortDirection === 'asc' ? 'arrow-up' : 'arrow-down');
-      dirBtn.setAttribute('aria-label', this.sortDirection === 'asc' ? 'Ascending' : 'Descending');
-      this.items = this.getSortedChildren(this.currentFolder!);
-      await this.applyFilter();
-      this.renderList();
+    dirBtn.addEventListener('click', () => {
+      void (async () => {
+        this.sortDirection = this.sortDirection === 'asc' ? 'desc' : 'asc';
+        dirBtn.empty();
+        setIcon(dirBtn, this.sortDirection === 'asc' ? 'arrow-up' : 'arrow-down');
+        dirBtn.setAttribute('aria-label', this.sortDirection === 'asc' ? 'Ascending' : 'Descending');
+        if (!this.currentFolder) return;
+        this.items = this.getSortedChildren(this.currentFolder);
+        await this.applyFilter();
+        this.renderList();
+      })().catch((e) => {
+        console.error('Folder focus: failed to toggle sort direction', e);
+      });
     });
 
     // New folder button
     const newFolderBtn = sortEl.createEl('button', { cls: 'folder-focus-new-folder' });
     setIcon(newFolderBtn, 'folder-plus');
     newFolderBtn.setAttribute('aria-label', 'New folder');
-    newFolderBtn.addEventListener('click', () => this.createNewFolder());
+    newFolderBtn.addEventListener('click', () => {
+      void this.createNewFolder().catch((e) => {
+        console.error('Folder focus: failed to create folder', e);
+      });
+    });
 
     // New note button
     const newNoteBtn = sortEl.createEl('button', { cls: 'folder-focus-new-note' });
     setIcon(newNoteBtn, 'file-plus');
     newNoteBtn.setAttribute('aria-label', 'New note');
-    newNoteBtn.addEventListener('click', () => this.createNewNote());
+    newNoteBtn.addEventListener('click', () => {
+      void this.createNewNote().catch((e) => {
+        console.error('Folder focus: failed to create note', e);
+      });
+    });
 
     const pathEl = this.headerEl.createDiv({ cls: 'folder-focus-path' });
     pathEl.setText(this.currentFolder.path || '/');
@@ -284,42 +318,50 @@ export class FolderFocusView extends ItemView {
     const clearBtn = searchWrapper.createEl('button', { cls: 'folder-focus-search-clear' });
     setIcon(clearBtn, 'x');
     clearBtn.setAttribute('aria-label', 'Clear search');
-    clearBtn.style.display = this.searchQuery ? 'flex' : 'none';
+    clearBtn.toggleClass('is-hidden', !this.searchQuery);
 
-    clearBtn.addEventListener('click', async () => {
-      this.searchQuery = '';
-      this.searchEl.value = '';
-      clearBtn.style.display = 'none';
-      await this.applyFilter();
-      this.renderList();
-      this.searchEl.focus();
+    clearBtn.addEventListener('click', () => {
+      void (async () => {
+        this.searchQuery = '';
+        this.searchEl.value = '';
+        clearBtn.addClass('is-hidden');
+        await this.applyFilter();
+        this.renderList();
+        this.searchEl.focus();
+      })().catch((e) => {
+        console.error('Folder focus: failed to clear search', e);
+      });
     });
 
     // Update clear button visibility on input
     this.searchEl.addEventListener('input', () => {
-      clearBtn.style.display = this.searchEl.value ? 'flex' : 'none';
+      clearBtn.toggleClass('is-hidden', !this.searchEl.value);
     });
 
     // Enter key to search, Escape to clear
-    this.searchEl.addEventListener('keydown', async (event: KeyboardEvent) => {
-      if (event.key === 'Enter') {
-        event.preventDefault();
-        this.searchQuery = this.searchEl.value;
-        await this.applyFilter();
-        this.renderList();
-        this.listEl.focus();
-      } else if (event.key === 'Escape') {
-        event.preventDefault();
-        event.stopPropagation();
-        if (this.searchQuery || this.searchEl.value) {
-          this.searchQuery = '';
-          this.searchEl.value = '';
-          clearBtn.style.display = 'none';
+    this.searchEl.addEventListener('keydown', (event: KeyboardEvent) => {
+      void (async () => {
+        if (event.key === 'Enter') {
+          event.preventDefault();
+          this.searchQuery = this.searchEl.value;
           await this.applyFilter();
           this.renderList();
+          this.listEl.focus();
+        } else if (event.key === 'Escape') {
+          event.preventDefault();
+          event.stopPropagation();
+          if (this.searchQuery || this.searchEl.value) {
+            this.searchQuery = '';
+            this.searchEl.value = '';
+            clearBtn.addClass('is-hidden');
+            await this.applyFilter();
+            this.renderList();
+          }
+          this.listEl.focus();
         }
-        this.listEl.focus();
-      }
+      })().catch((e) => {
+        console.error('Folder focus: failed to handle search keydown', e);
+      });
     });
 
     // Folders only toggle
@@ -329,12 +371,16 @@ export class FolderFocusView extends ItemView {
     toggleCheckbox.checked = this.searchFoldersOnly;
     toggleLabel.appendText(' Folders only');
 
-    toggleCheckbox.addEventListener('change', async () => {
-      this.searchFoldersOnly = toggleCheckbox.checked;
-      if (this.searchQuery) {
-        await this.applyFilter();
-        this.renderList();
-      }
+    toggleCheckbox.addEventListener('change', () => {
+      void (async () => {
+        this.searchFoldersOnly = toggleCheckbox.checked;
+        if (this.searchQuery) {
+          await this.applyFilter();
+          this.renderList();
+        }
+      })().catch((e) => {
+        console.error('Folder focus: failed to toggle folders-only filter', e);
+      });
     });
   }
 
@@ -455,11 +501,13 @@ export class FolderFocusView extends ItemView {
       // Double-click handler - enter folder or open file
       itemEl.addEventListener('dblclick', (event: MouseEvent) => {
         this.focusIndex = index;
-        if (isFolder) {
-          this.enterFolder(item as TFolder);
-        } else {
+        if (item instanceof TFolder) {
+          this.enterFolder(item);
+          return;
+        }
+        if (item instanceof TFile) {
           const openInNewTab = event.metaKey || event.ctrlKey;
-          this.openFile(item as TFile, openInNewTab);
+          this.openFile(item, openInNewTab);
         }
       });
 
@@ -482,27 +530,39 @@ export class FolderFocusView extends ItemView {
         // Folder-specific options
         if (isFolder) {
           menu.addItem((menuItem) => {
-            menuItem
-              .setTitle('Rename folder')
-              .setIcon('pencil')
-              .onClick(() => this.renameItem(item));
+          menuItem
+            .setTitle('Rename folder')
+            .setIcon('pencil')
+            .onClick(() => {
+              void this.renameItem(item).catch((e) => {
+                console.error('Folder focus: failed to rename item', e);
+              });
+            });
           });
 
           menu.addItem((menuItem) => {
             menuItem
               .setTitle('Delete folder')
               .setIcon('trash')
-              .onClick(() => this.deleteItem(item));
+              .onClick(() => {
+                void this.deleteItem(item).catch((e) => {
+                  console.error('Folder focus: failed to delete item', e);
+                });
+              });
           });
 
           menu.addSeparator();
         } else {
           // File-specific options
           menu.addItem((menuItem) => {
-            menuItem
-              .setTitle('Delete file')
-              .setIcon('trash')
-              .onClick(() => this.deleteItem(item));
+          menuItem
+            .setTitle('Delete file')
+            .setIcon('trash')
+            .onClick(() => {
+              void this.deleteItem(item).catch((e) => {
+                console.error('Folder focus: failed to delete item', e);
+              });
+            });
           });
 
           menu.addSeparator();
@@ -517,9 +577,13 @@ export class FolderFocusView extends ItemView {
           menuItem
             .setTitle(copyItems.length > 1 ? `Copy paths (${copyItems.length})` : 'Copy path')
             .setIcon('copy')
-            .onClick(async () => {
-              const paths = copyItems.map(i => i.path).join('\n');
-              await navigator.clipboard.writeText(paths);
+            .onClick(() => {
+              void (async () => {
+                const paths = copyItems.map((i) => i.path).join('\n');
+                await navigator.clipboard.writeText(paths);
+              })().catch((e) => {
+                console.error('Folder focus: failed to copy paths', e);
+              });
             });
         });
 
@@ -527,10 +591,14 @@ export class FolderFocusView extends ItemView {
 
         // Custom item: Create folder with selection
         menu.addItem((menuItem) => {
-          menuItem
-            .setTitle('Create folder with selection')
-            .setIcon('folder-plus')
-            .onClick(() => this.createFolderWithSelection());
+        menuItem
+          .setTitle('Create folder with selection')
+          .setIcon('folder-plus')
+          .onClick(() => {
+            void this.createFolderWithSelection().catch((e) => {
+              console.error('Folder focus: failed to create folder from selection', e);
+            });
+          });
         });
 
         menu.addSeparator();
@@ -555,14 +623,16 @@ export class FolderFocusView extends ItemView {
 
         // Store selected item paths in DataTransfer
         const selectedPaths = Array.from(this.selectedIndices)
-          .map(i => this.filteredItems[i]?.path)
-          .filter(Boolean) as string[];
+          .map((i) => this.filteredItems[i]?.path)
+          .filter((p): p is string => typeof p === 'string');
 
-        event.dataTransfer?.setData('application/json', JSON.stringify({
+        const dt = event.dataTransfer;
+        if (!dt) return;
+        dt.setData('application/json', JSON.stringify({
           type: 'folder-focus-items',
-          paths: selectedPaths
+          paths: selectedPaths,
         }));
-        event.dataTransfer!.effectAllowed = 'move';
+        dt.effectAllowed = 'move';
 
         // Add visual feedback
         this.selectedIndices.forEach(i => {
@@ -587,15 +657,16 @@ export class FolderFocusView extends ItemView {
           const dragData = this.getDragData(event);
           if (!dragData) return;
 
-          const targetFolder = item as TFolder;
+          if (!(item instanceof TFolder)) return;
+          const targetFolder = item;
           const isInvalidTarget = this.isInvalidDropTarget(dragData.paths, targetFolder);
 
           if (isInvalidTarget) {
-            event.dataTransfer!.dropEffect = 'none';
+            if (event.dataTransfer) event.dataTransfer.dropEffect = 'none';
             itemEl.removeClass('is-drop-target');
             itemEl.addClass('is-drop-invalid');
           } else {
-            event.dataTransfer!.dropEffect = 'move';
+            if (event.dataTransfer) event.dataTransfer.dropEffect = 'move';
             itemEl.addClass('is-drop-target');
             itemEl.removeClass('is-drop-invalid');
           }
@@ -606,27 +677,32 @@ export class FolderFocusView extends ItemView {
         });
 
         itemEl.addEventListener('dragleave', (event: DragEvent) => {
-          if (!itemEl.contains(event.relatedTarget as Node)) {
+          const rt = event.relatedTarget;
+          if (rt instanceof Node && !itemEl.contains(rt)) {
             itemEl.removeClass('is-drop-target');
             itemEl.removeClass('is-drop-invalid');
           }
         });
 
-        itemEl.addEventListener('drop', async (event: DragEvent) => {
-          event.preventDefault();
-          itemEl.removeClass('is-drop-target');
-          itemEl.removeClass('is-drop-invalid');
+        itemEl.addEventListener('drop', (event: DragEvent) => {
+          void (async () => {
+            event.preventDefault();
+            itemEl.removeClass('is-drop-target');
+            itemEl.removeClass('is-drop-invalid');
 
-          const dragData = this.getDragData(event);
-          if (!dragData) return;
+            const dragData = this.getDragData(event);
+            if (!dragData) return;
+            if (!(item instanceof TFolder)) return;
+            const targetFolder = item;
 
-          const targetFolder = item as TFolder;
+            if (this.isInvalidDropTarget(dragData.paths, targetFolder)) {
+              return;
+            }
 
-          if (this.isInvalidDropTarget(dragData.paths, targetFolder)) {
-            return;
-          }
-
-          await this.moveItemsToFolder(dragData.paths, targetFolder);
+            await this.moveItemsToFolder(dragData.paths, targetFolder);
+          })().catch((e) => {
+            console.error('Folder focus: failed to drop items', e);
+          });
         });
       }
 
@@ -800,7 +876,9 @@ export class FolderFocusView extends ItemView {
     // Use forceNewTab if provided, otherwise respect the setting
     const openInNewTab = forceNewTab ?? this.plugin.settings.openInNewTab;
     const leaf = this.app.workspace.getLeaf(openInNewTab ? 'tab' : false);
-    leaf.openFile(file);
+    void leaf.openFile(file).catch((e) => {
+      console.error('Folder focus: failed to open file', e);
+    });
   }
 
   enterOrOpen() {
@@ -961,7 +1039,7 @@ export class FolderFocusView extends ItemView {
   }
 
   async deleteItem(item: TAbstractFile) {
-    await this.app.vault.trash(item, true);
+    await this.app.fileManager.trashFile(item);
   }
 
   async promptForName(currentName: string, title: string): Promise<string | null> {
@@ -1066,14 +1144,13 @@ class RenameModal extends Modal {
 
   onOpen() {
     const { contentEl } = this;
-    contentEl.createEl('h3', { text: this.title });
+    contentEl.createDiv({ cls: 'folder-focus-modal-title', text: this.title });
 
     const inputEl = contentEl.createEl('input', {
       type: 'text',
       value: this.currentName,
+      cls: 'folder-focus-modal-input',
     });
-    inputEl.style.width = '100%';
-    inputEl.style.marginBottom = '1em';
     inputEl.select();
 
     const buttonContainer = contentEl.createDiv({ cls: 'modal-button-container' });

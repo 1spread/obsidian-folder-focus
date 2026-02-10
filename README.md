@@ -2,6 +2,10 @@
 
 A Finder-like folder navigation view for [Obsidian](https://obsidian.md).
 
+## Obsidian Community Plugin Submission
+
+- Obsidian `obsidianmd/obsidian-releases` PR: [#10059](https://github.com/obsidianmd/obsidian-releases/pull/10059)
+
 ## Features
 
 ### Navigation
@@ -53,8 +57,8 @@ A Finder-like folder navigation view for [Obsidian](https://obsidian.md).
 ### Opening Folder Focus
 
 - Click the **folder icon** in the left ribbon
-- Right-click any folder → **"Open in Folder Focus"**
-- Use command palette: **"Folder Focus: Open Folder Focus view"**
+- Right-click any folder → **"Open in folder focus"**
+- Use command palette: **"Open folder navigation view"**
 
 ### Keyboard Shortcuts
 
@@ -64,8 +68,8 @@ A Finder-like folder navigation view for [Obsidian](https://obsidian.md).
 | `Shift+↑` / `Shift+↓` | Extend selection up/down |
 | `⌘+A` / `Ctrl+A` | Select all |
 | `⌘+↑` / `Ctrl+↑` | Navigate to parent folder |
-| `⌘+↓` / `Ctrl+↓` | Enter folder / Open file |
-| `Enter` | Enter folder / Open file |
+| `⌘+↓` / `Ctrl+↓` | Enter folder or open file |
+| `Enter` | Enter folder or open file |
 | `⌘+Enter` / `Ctrl+Enter` | Open file in new tab |
 | `⇧⌘+N` / `Ctrl+Shift+N` | Create new note |
 | `Escape` | Clear search / Collapse selection |
@@ -77,7 +81,7 @@ A Finder-like folder navigation view for [Obsidian](https://obsidian.md).
 | Single click | Select item |
 | Cmd/Ctrl + Click | Toggle selection (multi-select) |
 | Shift + Click | Range selection |
-| Double click | Enter folder / Open file |
+| Double click | Enter folder or open file |
 | Cmd/Ctrl + Double click | Open file in new tab |
 | Right click | Context menu |
 
@@ -102,10 +106,10 @@ A Finder-like folder navigation view for [Obsidian](https://obsidian.md).
 
 All commands are available via the command palette (`⌘+P` / `Ctrl+P`):
 
-- **Open Folder Focus view** - Opens the Folder Focus panel
-- **Reveal active file in Folder Focus** - Shows the current file in Folder Focus
+- **Open folder navigation view** - Opens the folder navigation panel
+- **Reveal active file** - Shows the current file in the navigation view
 - **Navigate to parent folder** - Go up one level
-- **Enter folder / Open file** - Enter selected folder or open selected file
+- **Enter folder or open file** - Enter selected folder or open selected file
 - **Create new note in current folder** - Creates a new note
 
 ## Settings

@@ -1,4 +1,4 @@
-import { Plugin, WorkspaceLeaf, TFile, TFolder, Menu, PluginSettingTab, App, Setting } from 'obsidian';
+import { Plugin, WorkspaceLeaf, TFolder, Menu, PluginSettingTab, App, Setting } from 'obsidian';
 import { FolderFocusView, VIEW_TYPE_FOLDER_FOCUS } from './FolderFocusView';
 
 interface FolderFocusSettings {
@@ -22,15 +22,21 @@ export default class FolderFocusPlugin extends Plugin {
     );
 
     // 2. Add ribbon icon
-    this.addRibbonIcon('folder', 'Open Folder Focus', () => {
-      this.activateView();
+    this.addRibbonIcon('folder', 'Open folder focus', () => {
+      void this.activateView().catch((e) => {
+        console.error('Folder focus: failed to activate view', e);
+      });
     });
 
     // 3. Register commands
     this.addCommand({
-      id: 'open-folder-focus',
-      name: 'Open Folder Focus view',
-      callback: () => this.activateView(),
+      id: 'open-view',
+      name: 'Open folder navigation view',
+      callback: () => {
+        void this.activateView().catch((e) => {
+          console.error('Folder focus: failed to activate view', e);
+        });
+      },
     });
 
     // Commands without default hotkeys - shortcuts are handled in the view's keydown handler
@@ -42,7 +48,7 @@ export default class FolderFocusPlugin extends Plugin {
 
     this.addCommand({
       id: 'enter-folder-or-open',
-      name: 'Enter folder / Open file',
+      name: 'Enter folder or open file',
       callback: () => this.getView()?.enterOrOpen(),
     });
 
@@ -54,10 +60,14 @@ export default class FolderFocusPlugin extends Plugin {
 
     this.addCommand({
       id: 'reveal-active-file',
-      name: 'Reveal active file in Folder Focus',
-      callback: async () => {
-        await this.activateView();
-        this.getView()?.revealActiveFile();
+      name: 'Reveal active file',
+      callback: () => {
+        void (async () => {
+          await this.activateView();
+          this.getView()?.revealActiveFile();
+        })().catch((e) => {
+          console.error('Folder focus: failed to reveal active file', e);
+        });
       },
     });
 
@@ -67,14 +77,18 @@ export default class FolderFocusPlugin extends Plugin {
         if (file instanceof TFolder) {
           menu.addItem((item) => {
             item
-              .setTitle('Open in Folder Focus')
+              .setTitle('Open in folder focus')
               .setIcon('folder')
-              .onClick(async () => {
-                await this.activateView();
-                const view = this.getView();
-                if (view) {
-                  view.setFolder(file);
-                }
+              .onClick(() => {
+                void (async () => {
+                  await this.activateView();
+                  const view = this.getView();
+                  if (view) {
+                    view.setFolder(file);
+                  }
+                })().catch((e) => {
+                  console.error('Folder focus: failed to open folder focus from menu', e);
+                });
               });
           });
         }
@@ -85,7 +99,7 @@ export default class FolderFocusPlugin extends Plugin {
     this.addSettingTab(new FolderFocusSettingTab(this.app, this));
   }
 
-  async onunload() {
+  onunload() {
     // View cleanup handled automatically by Obsidian
   }
 
@@ -99,7 +113,8 @@ export default class FolderFocusPlugin extends Plugin {
 
   getView(): FolderFocusView | null {
     const leaves = this.app.workspace.getLeavesOfType(VIEW_TYPE_FOLDER_FOCUS);
-    return leaves.length > 0 ? (leaves[0].view as FolderFocusView) : null;
+    const view = leaves[0]?.view;
+    return view instanceof FolderFocusView ? view : null;
   }
 
   async activateView() {
@@ -134,10 +149,10 @@ class FolderFocusSettingTab extends PluginSettingTab {
 
     // How to Use section
     const howtoEl = containerEl.createEl('div', { cls: 'folder-focus-howto' });
-    howtoEl.createEl('h3', { text: 'How to Use' });
+    new Setting(howtoEl).setName('How to use').setHeading();
     const steps = howtoEl.createEl('ol');
     const stepData = [
-      ['Open Folder Focus', 'Click the folder icon in the left ribbon, or right-click any folder and select "Open in Folder Focus".'],
+      ['Open folder focus', 'Click the folder icon in the left ribbon, or right-click any folder and select "Open in folder focus".'],
       ['Navigate folders', 'Double-click a folder to enter it. Use ⌘+↑ to go back to the parent folder.'],
       ['Open files', 'Double-click a file to open it. Use ⌘+Double-click to open in a new tab.'],
       ['Search', 'Type in the search box and press Enter to search file names and content across all subfolders.'],
@@ -150,7 +165,7 @@ class FolderFocusSettingTab extends PluginSettingTab {
     }
 
     // Options section
-    containerEl.createEl('h3', { text: 'Options', cls: 'folder-focus-section-heading' });
+    new Setting(containerEl).setName('Options').setHeading();
 
     new Setting(containerEl)
       .setName('Open files in new tab')
@@ -158,22 +173,24 @@ class FolderFocusSettingTab extends PluginSettingTab {
       .addToggle((toggle) =>
         toggle
           .setValue(this.plugin.settings.openInNewTab)
-          .onChange(async (value) => {
+          .onChange((value) => {
             this.plugin.settings.openInNewTab = value;
-            await this.plugin.saveSettings();
+            void this.plugin.saveSettings().catch((e) => {
+              console.error('Folder focus: failed to save settings', e);
+            });
           })
       );
 
     // Keyboard shortcuts (collapsible)
     const shortcutsDetails = containerEl.createEl('details', { cls: 'folder-focus-details' });
-    shortcutsDetails.createEl('summary', { text: 'Keyboard Shortcuts' });
+    shortcutsDetails.createEl('summary', { text: 'Keyboard shortcuts' });
     const shortcutsTable = shortcutsDetails.createEl('table', { cls: 'folder-focus-table' });
     const shortcuts = [
       ['↑ / ↓', 'Move selection'],
       ['Shift+↑ / ↓', 'Extend selection'],
       ['⌘+A', 'Select all'],
       ['⌘+↑', 'Parent folder'],
-      ['⌘+↓ / Enter', 'Enter folder / Open file'],
+      ['⌘+↓ / Enter', 'Enter folder or open file'],
       ['⌘+Enter', 'Open in new tab'],
       ['⇧⌘+N', 'Create new note'],
       ['Escape', 'Clear search'],
@@ -186,13 +203,13 @@ class FolderFocusSettingTab extends PluginSettingTab {
 
     // Mouse actions (collapsible)
     const mouseDetails = containerEl.createEl('details', { cls: 'folder-focus-details' });
-    mouseDetails.createEl('summary', { text: 'Mouse Actions' });
+    mouseDetails.createEl('summary', { text: 'Mouse actions' });
     const mouseTable = mouseDetails.createEl('table', { cls: 'folder-focus-table' });
     const mouseActions = [
       ['Click', 'Select item'],
       ['⌘+Click', 'Toggle selection'],
       ['Shift+Click', 'Range selection'],
-      ['Double-click', 'Enter folder / Open file'],
+      ['Double-click', 'Enter folder or open file'],
       ['⌘+Double-click', 'Open in new tab'],
       ['Right-click', 'Context menu'],
     ];
