@@ -5,6 +5,10 @@ A Finder-like folder navigation view for [Obsidian](https://obsidian.md).
 ## Obsidian Community Plugin Submission
 
 - Obsidian `obsidianmd/obsidian-releases` PR: [#10059](https://github.com/obsidianmd/obsidian-releases/pull/10059)
+- When ObsidianReviewBot requests changes:
+  - Fix issues in this repository and **push to the same branch** (no new PR needed).
+  - **Do not rebase** the submission branch (reviewers will handle it after approval).
+  - The bot will re-scan automatically (it may take **up to ~6 hours** after pushing changes).
 
 ## Features
 
