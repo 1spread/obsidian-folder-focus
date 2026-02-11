@@ -771,7 +771,7 @@ export class FolderFocusView extends ItemView {
       case 'N':
         if (isMod && isShift) {
           event.preventDefault();
-          this.createNewNote();
+          void this.createNewNote();
         }
         break;
       case 'a':

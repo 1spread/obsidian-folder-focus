@@ -130,7 +130,7 @@ export default class FolderFocusPlugin extends Plugin {
     }
 
     if (leaf) {
-      workspace.revealLeaf(leaf);
+      await workspace.revealLeaf(leaf);
     }
   }
 }
@@ -165,7 +165,7 @@ class FolderFocusSettingTab extends PluginSettingTab {
     }
 
     // Options section
-    new Setting(containerEl).setName('Options').setHeading();
+    new Setting(containerEl).setName('Behavior').setHeading();
 
     new Setting(containerEl)
       .setName('Open files in new tab')
