@@ -1,0 +1,102 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="760" viewBox="0 0 1280 760" role="img" aria-labelledby="title desc">
+  <title id="title">Folder Focus preview</title>
+  <desc id="desc">A preview of the Folder Focus Obsidian plugin showing a focused folder navigation pane with search, sorting, folder and file rows, multi-selection, and a context menu.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#f8fafc"/>
+      <stop offset="1" stop-color="#eef2f7"/>
+    </linearGradient>
+    <filter id="shadow" x="-12%" y="-12%" width="124%" height="124%">
+      <feDropShadow dx="0" dy="20" stdDeviation="22" flood-color="#0f172a" flood-opacity="0.18"/>
+    </filter>
+  </defs>
+
+  <rect width="1280" height="760" fill="url(#bg)"/>
+  <rect x="72" y="62" width="1136" height="636" rx="22" fill="#fdfdfd" filter="url(#shadow)"/>
+
+  <rect x="72" y="62" width="1136" height="54" rx="22" fill="#f7f7f8"/>
+  <rect x="72" y="94" width="1136" height="22" fill="#f7f7f8"/>
+  <circle cx="104" cy="89" r="8" fill="#ff5f57"/>
+  <circle cx="132" cy="89" r="8" fill="#ffbd2e"/>
+  <circle cx="160" cy="89" r="8" fill="#28c840"/>
+  <text x="640" y="96" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif" font-size="17" font-weight="600" fill="#334155">Obsidian - Folder Focus</text>
+
+  <rect x="72" y="116" width="84" height="582" fill="#252833"/>
+  <g fill="#cbd5e1">
+    <rect x="102" y="154" width="24" height="24" rx="5"/>
+    <rect x="102" y="202" width="24" height="24" rx="5" opacity="0.7"/>
+    <rect x="102" y="250" width="24" height="24" rx="5" opacity="0.7"/>
+    <rect x="102" y="298" width="24" height="24" rx="5" opacity="0.7"/>
+  </g>
+  <rect x="92" y="144" width="44" height="44" rx="12" fill="#3b82f6" opacity="0.22"/>
+
+  <rect x="156" y="116" width="338" height="582" fill="#fafafa"/>
+  <line x1="494" y1="116" x2="494" y2="698" stroke="#e5e7eb"/>
+  <text x="188" y="160" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif" font-size="20" font-weight="700" fill="#111827">Projects</text>
+  <text x="188" y="184" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif" font-size="13" fill="#64748b">/Clients/Projects</text>
+
+  <g font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif" font-size="15">
+    <rect x="180" y="214" width="282" height="38" rx="8" fill="#eef2ff"/>
+    <text x="212" y="238" fill="#1f2937">Folder Focus</text>
+    <text x="212" y="284" fill="#475569">Daily notes</text>
+    <text x="212" y="328" fill="#475569">Research</text>
+    <text x="212" y="372" fill="#475569">Templates</text>
+    <text x="212" y="416" fill="#475569">Archive</text>
+  </g>
+
+  <rect x="494" y="116" width="714" height="582" fill="#ffffff"/>
+  <rect x="526" y="148" width="650" height="96" rx="14" fill="#f8fafc" stroke="#e5e7eb"/>
+  <text x="556" y="184" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif" font-size="24" font-weight="700" fill="#111827">Folder Focus</text>
+  <text x="556" y="211" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif" font-size="14" fill="#64748b">Focused folder navigation in the sidebar</text>
+
+  <rect x="900" y="164" width="114" height="34" rx="8" fill="#ffffff" stroke="#d1d5db"/>
+  <text x="957" y="186" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif" font-size="13" font-weight="600" fill="#374151">Name</text>
+  <rect x="1026" y="164" width="40" height="34" rx="8" fill="#ffffff" stroke="#d1d5db"/>
+  <text x="1046" y="187" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif" font-size="17" fill="#374151">↑</text>
+  <rect x="1078" y="164" width="40" height="34" rx="8" fill="#ffffff" stroke="#d1d5db"/>
+  <text x="1098" y="187" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif" font-size="17" fill="#374151">+</text>
+
+  <rect x="526" y="264" width="650" height="44" rx="10" fill="#ffffff" stroke="#d1d5db"/>
+  <text x="556" y="292" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif" font-size="15" fill="#94a3b8">Search in folder...</text>
+  <circle cx="1148" cy="286" r="12" fill="#e5e7eb"/>
+  <text x="1148" y="291" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif" font-size="15" fill="#64748b">x</text>
+
+  <g font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif" font-size="16">
+    <rect x="526" y="332" width="650" height="48" rx="9" fill="#eff6ff" stroke="#bfdbfe"/>
+    <text x="566" y="362" fill="#1e293b" font-weight="600">Campaign notes</text>
+    <text x="1148" y="362" text-anchor="middle" fill="#64748b">›</text>
+
+    <rect x="526" y="386" width="650" height="48" rx="9" fill="#ffffff"/>
+    <text x="566" y="416" fill="#475569">Monthly report.md</text>
+
+    <rect x="526" y="440" width="650" height="48" rx="9" fill="#eef2ff" stroke="#c7d2fe"/>
+    <text x="566" y="470" fill="#1e293b" font-weight="600">SEO research</text>
+    <text x="1148" y="470" text-anchor="middle" fill="#64748b">›</text>
+
+    <rect x="526" y="494" width="650" height="48" rx="9" fill="#eef2ff" stroke="#c7d2fe"/>
+    <text x="566" y="524" fill="#1e293b" font-weight="600">Content drafts</text>
+    <text x="1148" y="524" text-anchor="middle" fill="#64748b">›</text>
+
+    <rect x="526" y="548" width="650" height="48" rx="9" fill="#ffffff"/>
+    <text x="566" y="578" fill="#475569">Meeting follow-up.md</text>
+  </g>
+
+  <g fill="#f59e0b">
+    <path d="M546 348h15l4 5h18a5 5 0 0 1 5 5v13a5 5 0 0 1-5 5h-37a5 5 0 0 1-5-5v-18a5 5 0 0 1 5-5z"/>
+    <path d="M546 456h15l4 5h18a5 5 0 0 1 5 5v13a5 5 0 0 1-5 5h-37a5 5 0 0 1-5-5v-18a5 5 0 0 1 5-5z"/>
+    <path d="M546 510h15l4 5h18a5 5 0 0 1 5 5v13a5 5 0 0 1-5 5h-37a5 5 0 0 1-5-5v-18a5 5 0 0 1 5-5z"/>
+  </g>
+  <g fill="#94a3b8">
+    <rect x="543" y="399" width="30" height="34" rx="5"/>
+    <rect x="543" y="561" width="30" height="34" rx="5"/>
+  </g>
+
+  <rect x="884" y="396" width="236" height="172" rx="12" fill="#ffffff" stroke="#d1d5db" filter="url(#shadow)"/>
+  <text x="908" y="430" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif" font-size="15" font-weight="600" fill="#111827">Context menu</text>
+  <line x1="908" y1="446" x2="1096" y2="446" stroke="#e5e7eb"/>
+  <text x="908" y="476" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif" font-size="14" fill="#374151">Rename folder</text>
+  <text x="908" y="510" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif" font-size="14" fill="#374151">Delete folder</text>
+  <text x="908" y="544" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif" font-size="14" fill="#374151">Create folder with selection</text>
+
+  <text x="640" y="668" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif" font-size="17" fill="#475569">Navigate folders, search recursively, multi-select items, and use familiar file actions without leaving the sidebar.</text>
+</svg>

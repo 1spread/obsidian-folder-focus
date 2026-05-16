@@ -2,6 +2,8 @@
 
 A Finder-like folder navigation view for [Obsidian](https://obsidian.md).
 
+![Folder Focus preview](https://raw.githubusercontent.com/1spread/obsidian-folder-focus/main/docs/images/folder-focus-preview.svg)
+
 ## Obsidian Community Plugin Submission
 
 - Obsidian `obsidianmd/obsidian-releases` PR: [#10059](https://github.com/obsidianmd/obsidian-releases/pull/10059)
