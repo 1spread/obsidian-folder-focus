@@ -6,6 +6,11 @@ export const VIEW_TYPE_FOLDER_FOCUS = 'folder-focus-view';
 export type SortOrder = 'name' | 'modified' | 'created';
 export type SortDirection = 'asc' | 'desc';
 
+interface FolderFocusDragData {
+  type: 'folder-focus-items';
+  paths: string[];
+}
+
 export class FolderFocusView extends ItemView {
   plugin: FolderFocusPlugin;
 
@@ -64,7 +69,9 @@ export class FolderFocusView extends ItemView {
     this.listEl = container.createDiv({ cls: 'folder-focus-list' });
 
     // Register keyboard navigation within the view
-    this.registerDomEvent(this.listEl, 'keydown', this.handleKeyDown.bind(this));
+    this.registerDomEvent(this.listEl, 'keydown', (event: KeyboardEvent) => {
+      this.handleKeyDown(event);
+    });
 
     // Listen to vault changes for live updates
     this.registerEvent(
@@ -771,7 +778,9 @@ export class FolderFocusView extends ItemView {
       case 'N':
         if (isMod && isShift) {
           event.preventDefault();
-          void this.createNewNote();
+          void this.createNewNote().catch((e) => {
+            console.error('Folder focus: failed to create note from shortcut', e);
+          });
         }
         break;
       case 'a':
@@ -1053,18 +1062,29 @@ export class FolderFocusView extends ItemView {
 
   // --- Drag and Drop helpers ---
 
-  private getDragData(event: DragEvent): { type: string; paths: string[] } | null {
+  private getDragData(event: DragEvent): FolderFocusDragData | null {
     try {
       const data = event.dataTransfer?.getData('application/json');
       if (!data) return null;
-      const parsed = JSON.parse(data);
-      if (parsed.type !== 'folder-focus-items' || !Array.isArray(parsed.paths)) {
+      const parsed: unknown = JSON.parse(data);
+      if (!this.isFolderFocusDragData(parsed)) {
         return null;
       }
       return parsed;
     } catch {
       return null;
     }
+  }
+
+  private isFolderFocusDragData(value: unknown): value is FolderFocusDragData {
+    if (typeof value !== 'object' || value === null) {
+      return false;
+    }
+
+    const candidate = value as { type?: unknown; paths?: unknown };
+    return candidate.type === 'folder-focus-items'
+      && Array.isArray(candidate.paths)
+      && candidate.paths.every((path): path is string => typeof path === 'string');
   }
 
   private isInvalidDropTarget(sourcePaths: string[], targetFolder: TFolder): boolean {

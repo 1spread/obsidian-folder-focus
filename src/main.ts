@@ -12,9 +12,20 @@ const DEFAULT_SETTINGS: FolderFocusSettings = {
 export default class FolderFocusPlugin extends Plugin {
   settings!: FolderFocusSettings;
 
-  async onload() {
-    await this.loadSettings();
+  onload(): void {
+    this.settings = { ...DEFAULT_SETTINGS };
+    void this.loadSettings().then(
+      () => {
+        this.registerPluginFeatures();
+      },
+      (e) => {
+        console.error('Folder focus: failed to load settings', e);
+        this.registerPluginFeatures();
+      }
+    );
+  }
 
+  private registerPluginFeatures(): void {
     // 1. Register the view
     this.registerView(
       VIEW_TYPE_FOLDER_FOCUS,
@@ -55,7 +66,14 @@ export default class FolderFocusPlugin extends Plugin {
     this.addCommand({
       id: 'create-new-note',
       name: 'Create new note in current folder',
-      callback: () => this.getView()?.createNewNote(),
+      callback: () => {
+        const view = this.getView();
+        if (view) {
+          void view.createNewNote().catch((e) => {
+            console.error('Folder focus: failed to create note', e);
+          });
+        }
+      },
     });
 
     this.addCommand({
@@ -73,7 +91,7 @@ export default class FolderFocusPlugin extends Plugin {
 
     // 4. Add context menu for folders
     this.registerEvent(
-      this.app.workspace.on('file-menu', (menu: Menu, file, source) => {
+      this.app.workspace.on('file-menu', (menu: Menu, file, _source) => {
         if (file instanceof TFolder) {
           menu.addItem((item) => {
             item
@@ -104,7 +122,11 @@ export default class FolderFocusPlugin extends Plugin {
   }
 
   async loadSettings() {
-    this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
+    const loadedData: unknown = await this.loadData();
+    this.settings = {
+      ...DEFAULT_SETTINGS,
+      ...(isFolderFocusSettings(loadedData) ? loadedData : {}),
+    };
   }
 
   async saveSettings() {
@@ -148,7 +170,7 @@ class FolderFocusSettingTab extends PluginSettingTab {
     containerEl.empty();
 
     // How to Use section
-    const howtoEl = containerEl.createEl('div', { cls: 'folder-focus-howto' });
+    const howtoEl = containerEl.createDiv({ cls: 'folder-focus-howto' });
     new Setting(howtoEl).setName('How to use').setHeading();
     const steps = howtoEl.createEl('ol');
     const stepData = [
@@ -161,7 +183,7 @@ class FolderFocusSettingTab extends PluginSettingTab {
     for (const [title, desc] of stepData) {
       const li = steps.createEl('li');
       li.createEl('strong', { text: title });
-      li.createEl('span', { text: ` — ${desc}` });
+      li.createSpan({ text: ` — ${desc}` });
     }
 
     // Options section
@@ -220,11 +242,19 @@ class FolderFocusSettingTab extends PluginSettingTab {
     }
 
     // Buy Me a Coffee
-    const supportEl = containerEl.createEl('div', { cls: 'folder-focus-support' });
+    const supportEl = containerEl.createDiv({ cls: 'folder-focus-support' });
     supportEl.createEl('p', { text: 'If you find this plugin helpful, consider supporting its development:' });
     const link = supportEl.createEl('a', { href: 'https://buymeacoffee.com/1spread' });
     const img = link.createEl('img', { cls: 'folder-focus-bmc-img' });
     img.src = 'https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png';
     img.alt = 'Buy Me A Coffee';
   }
+}
+
+function isFolderFocusSettings(value: unknown): value is Partial<FolderFocusSettings> {
+  if (typeof value !== 'object' || value === null) {
+    return false;
+  }
+  const candidate = value as { openInNewTab?: unknown };
+  return candidate.openInNewTab === undefined || typeof candidate.openInNewTab === 'boolean';
 }

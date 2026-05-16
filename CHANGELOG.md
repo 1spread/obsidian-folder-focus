@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.0.1 - 2026-05-16
+
+### Fixed
+- Addressed Obsidian community plugin automated review findings.
+- Updated the minimum Obsidian app version to match the APIs used by the plugin.
+- Added GitHub artifact attestations for release assets.
+
+---
+
 ## 2026-01-25
 
 ### Added
