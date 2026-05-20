@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.0.2 - 2026-05-20
+
+### Added
+- Added compact file type badges for Markdown, documents, spreadsheets, PDFs, images, JSON, code files, text files, and Obsidian canvas files.
+
+### Fixed
+- Stabilized the focused row spacing so the selection indicator does not shift item content.
+
+---
+
 ## 1.0.1 - 2026-05-16
 
 ### Fixed
