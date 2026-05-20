@@ -513,6 +513,12 @@
   opacity: 0.7;
 }
 
+.folder-focus-list.is-external-drop-target {
+  background: var(--background-modifier-hover);
+  outline: 1px dashed var(--interactive-accent);
+  outline-offset: -4px;
+}
+
 /* Rename modal */
 .folder-focus-modal-title {
   font-size: 14px;

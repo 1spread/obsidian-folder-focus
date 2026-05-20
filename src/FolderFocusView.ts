@@ -1,7 +1,14 @@
-import { ItemView, WorkspaceLeaf, TFile, TFolder, TAbstractFile, Menu, Modal, App, setIcon } from 'obsidian';
+import { ItemView, WorkspaceLeaf, TFile, TFolder, TAbstractFile, Menu, Modal, App, setIcon, Notice, Platform, normalizePath } from 'obsidian';
 import type FolderFocusPlugin from './main';
 
 export const VIEW_TYPE_FOLDER_FOCUS = 'folder-focus-view';
+
+type FsPromises = typeof import('fs/promises');
+type NodePath = typeof import('path');
+
+interface ObsidianDesktopWindow extends Window {
+  require?: NodeRequire;
+}
 
 export type SortOrder = 'name' | 'modified' | 'created';
 export type SortDirection = 'asc' | 'desc';
@@ -9,6 +16,17 @@ export type SortDirection = 'asc' | 'desc';
 interface FolderFocusDragData {
   type: 'folder-focus-items';
   paths: string[];
+}
+
+interface ExternalFile extends File {
+  path?: string;
+}
+
+interface ExternalDropSource {
+  name: string;
+  path?: string;
+  file?: File;
+  entry?: FileSystemEntry;
 }
 
 interface FileTypeBadge {
@@ -78,6 +96,7 @@ export class FolderFocusView extends ItemView {
     this.registerDomEvent(this.listEl, 'keydown', (event: KeyboardEvent) => {
       this.handleKeyDown(event);
     });
+    this.registerExternalDropOnList();
 
     // Listen to vault changes for live updates
     this.registerEvent(
@@ -672,6 +691,45 @@ export class FolderFocusView extends ItemView {
         menu.showAtMouseEvent(event);
       });
 
+      // Finder / external file drops. Folder rows import into that folder; file rows import into the current folder.
+      itemEl.addEventListener('dragover', (event: DragEvent) => {
+        if (!this.isExternalFileDrag(event)) return;
+        event.preventDefault();
+        event.stopPropagation();
+        if (event.dataTransfer) event.dataTransfer.dropEffect = 'copy';
+        itemEl.addClass('is-drop-target');
+      });
+
+      itemEl.addEventListener('dragenter', (event: DragEvent) => {
+        if (!this.isExternalFileDrag(event)) return;
+        event.preventDefault();
+        event.stopPropagation();
+        itemEl.addClass('is-drop-target');
+      });
+
+      itemEl.addEventListener('dragleave', (event: DragEvent) => {
+        if (!this.isExternalFileDrag(event)) return;
+        const rt = event.relatedTarget;
+        if (rt instanceof Node && !itemEl.contains(rt)) {
+          itemEl.removeClass('is-drop-target');
+        }
+      });
+
+      itemEl.addEventListener('drop', (event: DragEvent) => {
+        if (!this.isExternalFileDrag(event)) return;
+        void (async () => {
+          event.preventDefault();
+          event.stopPropagation();
+          itemEl.removeClass('is-drop-target');
+          const targetFolder = item instanceof TFolder ? item : this.currentFolder;
+          if (!targetFolder) return;
+          await this.importExternalDrop(event, targetFolder);
+        })().catch((e) => {
+          console.error('Folder focus: failed to import external drop', e);
+          new Notice('Failed to import dropped item.');
+        });
+      });
+
       // Drag and drop - make item draggable
       itemEl.setAttribute('draggable', 'true');
 
@@ -1119,6 +1177,48 @@ export class FolderFocusView extends ItemView {
 
   // --- Drag and Drop helpers ---
 
+  private registerExternalDropOnList(): void {
+    this.registerDomEvent(this.listEl, 'dragover', (event: DragEvent) => {
+      if (!this.isExternalFileDrag(event)) return;
+      event.preventDefault();
+      if (event.dataTransfer) event.dataTransfer.dropEffect = 'copy';
+      this.listEl.addClass('is-external-drop-target');
+    });
+
+    this.registerDomEvent(this.listEl, 'dragenter', (event: DragEvent) => {
+      if (!this.isExternalFileDrag(event)) return;
+      event.preventDefault();
+      this.listEl.addClass('is-external-drop-target');
+    });
+
+    this.registerDomEvent(this.listEl, 'dragleave', (event: DragEvent) => {
+      if (!this.isExternalFileDrag(event)) return;
+      const rt = event.relatedTarget;
+      if (rt instanceof Node && !this.listEl.contains(rt)) {
+        this.listEl.removeClass('is-external-drop-target');
+      }
+    });
+
+    this.registerDomEvent(this.listEl, 'drop', (event: DragEvent) => {
+      if (!this.isExternalFileDrag(event)) return;
+      void (async () => {
+        event.preventDefault();
+        this.listEl.removeClass('is-external-drop-target');
+        if (!this.currentFolder) return;
+        await this.importExternalDrop(event, this.currentFolder);
+      })().catch((e) => {
+        console.error('Folder focus: failed to import external drop', e);
+        new Notice('Failed to import dropped item.');
+      });
+    });
+  }
+
+  private isExternalFileDrag(event: DragEvent): boolean {
+    const dt = event.dataTransfer;
+    if (!dt) return false;
+    return Array.from(dt.types).includes('Files') || dt.files.length > 0;
+  }
+
   private getDragData(event: DragEvent): FolderFocusDragData | null {
     try {
       const data = event.dataTransfer?.getData('application/json');
@@ -1202,6 +1302,292 @@ export class FolderFocusView extends ItemView {
     }
     this.anchorIndex = 0;
     this.focusIndex = 0;
+  }
+
+  private async importExternalDrop(event: DragEvent, targetFolder: TFolder): Promise<void> {
+    const sources = await this.getExternalDropSources(event);
+    if (sources.length === 0) {
+      new Notice('No files found in drop.');
+      return;
+    }
+
+    let imported = 0;
+    let failed = 0;
+    for (const source of sources) {
+      try {
+        if (source.path && Platform.isDesktopApp) {
+          imported += await this.importExternalPath(source.path, targetFolder);
+        } else if (source.entry) {
+          imported += await this.importExternalEntry(source.entry, targetFolder);
+        } else if (source.file) {
+          await this.importExternalFile(source.file, targetFolder, source.name);
+          imported++;
+        }
+      } catch (error) {
+        failed++;
+        console.error(`Folder focus: failed to import ${source.path ?? source.name}`, error);
+      }
+    }
+
+    if (imported > 0) {
+      await this.refreshCurrentFolder();
+      const failedText = failed > 0 ? ` ${failed} failed.` : '';
+      new Notice(`Imported ${imported} item${imported === 1 ? '' : 's'}.${failedText}`);
+    } else {
+      new Notice('Failed to import dropped item.');
+    }
+  }
+
+  private async getExternalDropSources(event: DragEvent): Promise<ExternalDropSource[]> {
+    const dt = event.dataTransfer;
+    if (!dt) return [];
+
+    const sources: ExternalDropSource[] = [];
+    const seenPaths = new Set<string>();
+
+    for (const file of Array.from(dt.files) as ExternalFile[]) {
+      if (file.path) {
+        if (seenPaths.has(file.path)) continue;
+        seenPaths.add(file.path);
+      }
+
+      sources.push({
+        name: file.name,
+        path: file.path,
+        file,
+      });
+    }
+
+    for (const item of Array.from(dt.items)) {
+      if (item.kind !== 'file') continue;
+      const entry = typeof item.webkitGetAsEntry === 'function'
+        ? item.webkitGetAsEntry()
+        : null;
+      if (entry?.isDirectory && Platform.isDesktopApp) {
+        const file = item.getAsFile() as ExternalFile | null;
+        if (file?.path) {
+          if (seenPaths.has(file.path)) continue;
+          seenPaths.add(file.path);
+          sources.push({
+            name: entry.name || file.name,
+            path: file.path,
+            file,
+          });
+        } else {
+          sources.push({
+            name: entry.name,
+            entry,
+          });
+        }
+      }
+    }
+
+    return sources;
+  }
+
+  private async importExternalPath(sourcePath: string, targetFolder: TFolder): Promise<number> {
+    const { fs, nodePath } = this.getDesktopModules();
+    const stat = await fs.stat(sourcePath);
+    if (stat.isDirectory()) {
+      const folderName = nodePath.basename(sourcePath);
+      const destinationFolderPath = this.getUniqueVaultPath(targetFolder.path, folderName, true);
+      await this.ensureVaultFolder(destinationFolderPath);
+      try {
+        await this.copyDirectoryContents(sourcePath, destinationFolderPath, fs, nodePath);
+      } catch (error) {
+        await this.trashCreatedPath(destinationFolderPath);
+        throw error;
+      }
+      return 1;
+    }
+
+    if (stat.isFile()) {
+      const fileName = nodePath.basename(sourcePath);
+      const destinationPath = this.getUniqueVaultPath(targetFolder.path, fileName, false);
+      const data = await fs.readFile(sourcePath);
+      await this.app.vault.createBinary(destinationPath, this.toArrayBuffer(data));
+      return 1;
+    }
+
+    return 0;
+  }
+
+  private async importExternalEntry(entry: FileSystemEntry, targetFolder: TFolder): Promise<number> {
+    if (entry.isDirectory) {
+      const directoryEntry = entry as FileSystemDirectoryEntry;
+      const destinationFolderPath = this.getUniqueVaultPath(targetFolder.path, directoryEntry.name, true);
+      await this.ensureVaultFolder(destinationFolderPath);
+      try {
+        await this.copyDirectoryEntryContents(directoryEntry, destinationFolderPath);
+      } catch (error) {
+        await this.trashCreatedPath(destinationFolderPath);
+        throw error;
+      }
+      return 1;
+    }
+
+    if (entry.isFile) {
+      const fileEntry = entry as FileSystemFileEntry;
+      const file = await this.getFileFromEntry(fileEntry);
+      await this.importExternalFile(file, targetFolder, file.name);
+      return 1;
+    }
+
+    return 0;
+  }
+
+  private async copyDirectoryContents(sourceDirectoryPath: string, destinationFolderPath: string, fs: FsPromises, nodePath: NodePath): Promise<void> {
+    const entries = await fs.readdir(sourceDirectoryPath, { withFileTypes: true });
+    for (const entry of entries) {
+      const sourcePath = nodePath.join(sourceDirectoryPath, entry.name);
+
+      if (entry.isDirectory()) {
+        const childFolderPath = this.getUniqueVaultPath(destinationFolderPath, entry.name, true);
+        await this.ensureVaultFolder(childFolderPath);
+        await this.copyDirectoryContents(sourcePath, childFolderPath, fs, nodePath);
+        continue;
+      }
+
+      if (entry.isFile()) {
+        const destinationPath = this.getUniqueVaultPath(destinationFolderPath, entry.name, false);
+        const data = await fs.readFile(sourcePath);
+        await this.app.vault.createBinary(destinationPath, this.toArrayBuffer(data));
+      }
+    }
+  }
+
+  private async importExternalFile(file: File, targetFolder: TFolder, fileName: string): Promise<void> {
+    const destinationPath = this.getUniqueVaultPath(targetFolder.path, fileName, false);
+    await this.app.vault.createBinary(destinationPath, await file.arrayBuffer());
+  }
+
+  private async copyDirectoryEntryContents(directoryEntry: FileSystemDirectoryEntry, destinationFolderPath: string): Promise<void> {
+    const entries = await this.readAllDirectoryEntries(directoryEntry);
+    for (const entry of entries) {
+      if (entry.isDirectory) {
+        const childDirectory = entry as FileSystemDirectoryEntry;
+        const childFolderPath = this.getUniqueVaultPath(destinationFolderPath, childDirectory.name, true);
+        await this.ensureVaultFolder(childFolderPath);
+        await this.copyDirectoryEntryContents(childDirectory, childFolderPath);
+        continue;
+      }
+
+      if (entry.isFile) {
+        const file = await this.getFileFromEntry(entry as FileSystemFileEntry);
+        const destinationPath = this.getUniqueVaultPath(destinationFolderPath, file.name, false);
+        await this.app.vault.createBinary(destinationPath, await file.arrayBuffer());
+      }
+    }
+  }
+
+  private async readAllDirectoryEntries(directoryEntry: FileSystemDirectoryEntry): Promise<FileSystemEntry[]> {
+    const reader = directoryEntry.createReader();
+    const entries: FileSystemEntry[] = [];
+
+    while (true) {
+      const batch = await new Promise<FileSystemEntry[]>((resolve, reject) => {
+        reader.readEntries(resolve, reject);
+      });
+
+      if (batch.length === 0) {
+        break;
+      }
+
+      entries.push(...batch);
+    }
+
+    return entries;
+  }
+
+  private async getFileFromEntry(fileEntry: FileSystemFileEntry): Promise<File> {
+    return new Promise<File>((resolve, reject) => {
+      fileEntry.file(resolve, reject);
+    });
+  }
+
+  private async trashCreatedPath(path: string): Promise<void> {
+    const created = this.app.vault.getAbstractFileByPath(path);
+    if (!created) return;
+
+    try {
+      await this.app.fileManager.trashFile(created);
+    } catch (error) {
+      console.error(`Folder focus: failed to clean up partial import at ${path}`, error);
+    }
+  }
+
+  private async ensureVaultFolder(folderPath: string): Promise<void> {
+    const normalizedPath = normalizePath(folderPath);
+    if (!normalizedPath) return;
+
+    const parts = normalizedPath.split('/').filter(Boolean);
+    let currentPath = '';
+
+    for (const part of parts) {
+      currentPath = currentPath ? `${currentPath}/${part}` : part;
+      const existing = this.app.vault.getAbstractFileByPath(currentPath);
+
+      if (existing instanceof TFolder) {
+        continue;
+      }
+
+      if (existing) {
+        throw new Error(`Cannot create folder because a file already exists at ${currentPath}`);
+      }
+
+      await this.app.vault.createFolder(currentPath);
+    }
+  }
+
+  private getUniqueVaultPath(parentPath: string, name: string, isFolder: boolean): string {
+    const parsed = this.splitName(name, isFolder);
+    let counter = 0;
+    let candidateName = name;
+    let candidatePath = this.joinVaultPath(parentPath, candidateName);
+
+    while (this.app.vault.getAbstractFileByPath(candidatePath)) {
+      counter++;
+      candidateName = `${parsed.base} ${counter}${parsed.extension}`;
+      candidatePath = this.joinVaultPath(parentPath, candidateName);
+    }
+
+    return candidatePath;
+  }
+
+  private splitName(name: string, isFolder: boolean): { base: string; extension: string } {
+    if (isFolder) {
+      return { base: name, extension: '' };
+    }
+
+    const extensionIndex = name.lastIndexOf('.');
+    if (extensionIndex <= 0) {
+      return { base: name, extension: '' };
+    }
+
+    return {
+      base: name.substring(0, extensionIndex),
+      extension: name.substring(extensionIndex),
+    };
+  }
+
+  private joinVaultPath(parentPath: string, name: string): string {
+    return normalizePath(parentPath ? `${parentPath}/${name}` : name);
+  }
+
+  private toArrayBuffer(data: Buffer): ArrayBuffer {
+    return data.buffer.slice(data.byteOffset, data.byteOffset + data.byteLength);
+  }
+
+  private getDesktopModules(): { fs: FsPromises; nodePath: NodePath } {
+    const nodeRequire = (window as ObsidianDesktopWindow).require;
+    if (!nodeRequire) {
+      throw new Error('Desktop file system API is not available.');
+    }
+
+    return {
+      fs: nodeRequire('fs/promises') as FsPromises,
+      nodePath: nodeRequire('path') as NodePath,
+    };
   }
 }
 
