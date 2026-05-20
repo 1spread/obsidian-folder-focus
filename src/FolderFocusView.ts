@@ -11,6 +11,12 @@ interface FolderFocusDragData {
   paths: string[];
 }
 
+interface FileTypeBadge {
+  label: string;
+  type: string;
+  title: string;
+}
+
 export class FolderFocusView extends ItemView {
   plugin: FolderFocusPlugin;
 
@@ -215,6 +221,43 @@ export class FolderFocusView extends ItemView {
     if (activeFile?.parent) {
       this.setFolder(activeFile.parent, activeFile.path);
     }
+  }
+
+  getFileTypeBadge(file: TFile): FileTypeBadge {
+    const extension = file.extension.toLowerCase();
+
+    if (['md', 'markdown'].includes(extension)) {
+      return { label: 'md', type: 'markdown', title: 'Markdown file' };
+    }
+    if (extension === 'canvas') {
+      return { label: 'map', type: 'canvas', title: 'Canvas file' };
+    }
+    if (['txt', 'rtf'].includes(extension)) {
+      return { label: 'txt', type: 'text', title: 'Text file' };
+    }
+    if (['doc', 'docx', 'odt', 'gdoc'].includes(extension)) {
+      return { label: 'doc', type: 'document', title: 'Document file' };
+    }
+    if (['xls', 'xlsx', 'ods', 'gsheet'].includes(extension)) {
+      return { label: 'xls', type: 'spreadsheet', title: 'Spreadsheet file' };
+    }
+    if (extension === 'csv') {
+      return { label: 'csv', type: 'spreadsheet', title: 'CSV file' };
+    }
+    if (extension === 'pdf') {
+      return { label: 'pdf', type: 'pdf', title: 'PDF file' };
+    }
+    if (['png', 'jpg', 'jpeg', 'gif', 'webp', 'svg', 'bmp', 'avif'].includes(extension)) {
+      return { label: 'img', type: 'image', title: 'Image file' };
+    }
+    if (extension === 'json') {
+      return { label: 'json', type: 'json', title: 'JSON file' };
+    }
+    if (['js', 'ts', 'jsx', 'tsx', 'css', 'scss', 'html', 'xml', 'yaml', 'yml'].includes(extension)) {
+      return { label: extension, type: 'code', title: `${extension.toUpperCase()} file` };
+    }
+
+    return { label: 'file', type: 'generic', title: 'File' };
   }
 
   // --- Rendering ---
@@ -457,7 +500,21 @@ export class FolderFocusView extends ItemView {
 
       // Icon
       const iconEl = itemEl.createSpan({ cls: 'folder-focus-item-icon' });
-      setIcon(iconEl, isFolder ? 'folder' : 'file');
+      if (isFolder) {
+        setIcon(iconEl, 'folder');
+      } else if (item instanceof TFile) {
+        const badge = this.getFileTypeBadge(item);
+        iconEl.addClass('is-file-type');
+        iconEl.addClass(`is-${badge.type}`);
+        iconEl.setAttribute('aria-label', badge.title);
+        iconEl.setAttribute('title', badge.title);
+        iconEl.createSpan({
+          cls: 'folder-focus-file-badge',
+          text: badge.label,
+        });
+      } else {
+        setIcon(iconEl, 'file');
+      }
 
       // Name
       const nameEl = itemEl.createSpan({ cls: 'folder-focus-item-name' });

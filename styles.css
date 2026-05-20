@@ -238,6 +238,7 @@
 /* Focused item (keyboard cursor, only one) */
 .folder-focus-item.is-focused {
   border-left: 3px solid var(--interactive-accent);
+  padding-left: 13px;
 }
 
 /* Folder specific styles */
@@ -280,6 +281,74 @@
 .folder-focus-item-icon svg {
   width: 16px;
   height: 16px;
+}
+
+.folder-focus-item-icon.is-file-type {
+  width: 24px;
+  margin-right: 6px;
+}
+
+.folder-focus-file-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 22px;
+  height: 16px;
+  padding: 0 3px;
+  border-radius: 3px;
+  background: var(--background-modifier-border);
+  color: var(--text-muted);
+  font-size: 8px;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+.folder-focus-item-icon.is-markdown .folder-focus-file-badge {
+  background: rgba(64, 126, 231, 0.18);
+  color: #4d8dff;
+}
+
+.folder-focus-item-icon.is-text .folder-focus-file-badge {
+  background: rgba(111, 128, 145, 0.18);
+  color: #8da0b1;
+}
+
+.folder-focus-item-icon.is-document .folder-focus-file-badge {
+  background: rgba(113, 94, 214, 0.18);
+  color: #8f7dff;
+}
+
+.folder-focus-item-icon.is-canvas .folder-focus-file-badge {
+  background: rgba(45, 161, 148, 0.18);
+  color: #41bfb1;
+}
+
+.folder-focus-item-icon.is-spreadsheet .folder-focus-file-badge {
+  background: rgba(53, 147, 91, 0.18);
+  color: #4fb477;
+}
+
+.folder-focus-item-icon.is-pdf .folder-focus-file-badge {
+  background: rgba(207, 70, 70, 0.18);
+  color: #ff6868;
+}
+
+.folder-focus-item-icon.is-image .folder-focus-file-badge {
+  background: rgba(148, 88, 190, 0.18);
+  color: #bc7eee;
+}
+
+.folder-focus-item-icon.is-code .folder-focus-file-badge,
+.folder-focus-item-icon.is-json .folder-focus-file-badge {
+  background: rgba(202, 119, 45, 0.18);
+  color: #e89b4b;
+}
+
+.folder-focus-item-icon.is-generic .folder-focus-file-badge {
+  background: var(--background-modifier-border);
+  color: var(--text-muted);
 }
 
 /* Item Name */
