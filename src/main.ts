@@ -177,6 +177,7 @@ class FolderFocusSettingTab extends PluginSettingTab {
       ['Open folder focus', 'Click the folder icon in the left ribbon, or right-click any folder and select "Open in folder focus".'],
       ['Navigate folders', 'Double-click a folder to enter it. Use ⌘+↑ to go back to the parent folder.'],
       ['Open files', 'Double-click a file to open it. Use ⌘+Double-click to open in a new tab.'],
+      ['Import from Finder', 'Drag files or folders from Finder into the folder focus list to copy them into the current folder.'],
       ['Search', 'Type in the search box and press Enter to search file names and content across all subfolders.'],
       ['Multi-select', 'Hold ⌘ and click to select multiple items. Hold Shift and click for range selection.'],
     ];

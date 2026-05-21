@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.0.3 - 2026-05-21
+
+### Added
+- Added Finder drag and drop import for files and folders into Folder Focus.
+- Added recursive folder import with automatic non-overwriting names for conflicts.
+
+---
+
 ## 1.0.2 - 2026-05-20
 
 ### Added
