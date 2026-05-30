@@ -1,4 +1,6 @@
 import { ItemView, WorkspaceLeaf, TFile, TFolder, TAbstractFile, Menu, Modal, App, setIcon, Notice, Platform, normalizePath } from 'obsidian';
+import { getFileTypeBadge as getBadgeForExtension } from './fileTypeBadge';
+import type { FileTypeBadge } from './fileTypeBadge';
 import type FolderFocusPlugin from './main';
 
 export const VIEW_TYPE_FOLDER_FOCUS = 'folder-focus-view';
@@ -27,12 +29,6 @@ interface ExternalDropSource {
   path?: string;
   file?: File;
   entry?: FileSystemEntry;
-}
-
-interface FileTypeBadge {
-  label: string;
-  type: string;
-  title: string;
 }
 
 export class FolderFocusView extends ItemView {
@@ -243,40 +239,7 @@ export class FolderFocusView extends ItemView {
   }
 
   getFileTypeBadge(file: TFile): FileTypeBadge {
-    const extension = file.extension.toLowerCase();
-
-    if (['md', 'markdown'].includes(extension)) {
-      return { label: 'md', type: 'markdown', title: 'Markdown file' };
-    }
-    if (extension === 'canvas') {
-      return { label: 'map', type: 'canvas', title: 'Canvas file' };
-    }
-    if (['txt', 'rtf'].includes(extension)) {
-      return { label: 'txt', type: 'text', title: 'Text file' };
-    }
-    if (['doc', 'docx', 'odt', 'gdoc'].includes(extension)) {
-      return { label: 'doc', type: 'document', title: 'Document file' };
-    }
-    if (['xls', 'xlsx', 'ods', 'gsheet'].includes(extension)) {
-      return { label: 'xls', type: 'spreadsheet', title: 'Spreadsheet file' };
-    }
-    if (extension === 'csv') {
-      return { label: 'csv', type: 'spreadsheet', title: 'CSV file' };
-    }
-    if (extension === 'pdf') {
-      return { label: 'pdf', type: 'pdf', title: 'PDF file' };
-    }
-    if (['png', 'jpg', 'jpeg', 'gif', 'webp', 'svg', 'bmp', 'avif'].includes(extension)) {
-      return { label: 'img', type: 'image', title: 'Image file' };
-    }
-    if (extension === 'json') {
-      return { label: 'json', type: 'json', title: 'JSON file' };
-    }
-    if (['js', 'ts', 'jsx', 'tsx', 'css', 'scss', 'html', 'xml', 'yaml', 'yml'].includes(extension)) {
-      return { label: extension, type: 'code', title: `${extension.toUpperCase()} file` };
-    }
-
-    return { label: 'file', type: 'generic', title: 'File' };
+    return getBadgeForExtension(file.extension);
   }
 
   // --- Rendering ---

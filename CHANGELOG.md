@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased
+
+### Added
+- Added explicit badges for Obsidian Base, Python, PowerPoint, Excel, iWork, diagrams, ebooks, databases, design files, fonts, config files, notebooks, archives, audio, and video files.
+
+---
+
 ## 1.0.3 - 2026-05-21
 
 ### Added

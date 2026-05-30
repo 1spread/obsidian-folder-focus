@@ -320,6 +320,11 @@
   color: #8f7dff;
 }
 
+.folder-focus-item-icon.is-base .folder-focus-file-badge {
+  background: rgba(45, 161, 148, 0.18);
+  color: #41bfb1;
+}
+
 .folder-focus-item-icon.is-canvas .folder-focus-file-badge {
   background: rgba(45, 161, 148, 0.18);
   color: #41bfb1;
@@ -328,6 +333,11 @@
 .folder-focus-item-icon.is-spreadsheet .folder-focus-file-badge {
   background: rgba(53, 147, 91, 0.18);
   color: #4fb477;
+}
+
+.folder-focus-item-icon.is-presentation .folder-focus-file-badge {
+  background: rgba(194, 94, 47, 0.18);
+  color: #e27945;
 }
 
 .folder-focus-item-icon.is-pdf .folder-focus-file-badge {
@@ -340,10 +350,32 @@
   color: #bc7eee;
 }
 
+.folder-focus-item-icon.is-design .folder-focus-file-badge,
+.folder-focus-item-icon.is-diagram .folder-focus-file-badge {
+  background: rgba(148, 88, 190, 0.18);
+  color: #bc7eee;
+}
+
+.folder-focus-item-icon.is-ebook .folder-focus-file-badge,
+.folder-focus-item-icon.is-database .folder-focus-file-badge,
+.folder-focus-item-icon.is-font .folder-focus-file-badge,
+.folder-focus-item-icon.is-config .folder-focus-file-badge {
+  background: rgba(111, 128, 145, 0.18);
+  color: #8da0b1;
+}
+
 .folder-focus-item-icon.is-code .folder-focus-file-badge,
+.folder-focus-item-icon.is-python .folder-focus-file-badge,
 .folder-focus-item-icon.is-json .folder-focus-file-badge {
   background: rgba(202, 119, 45, 0.18);
   color: #e89b4b;
+}
+
+.folder-focus-item-icon.is-archive .folder-focus-file-badge,
+.folder-focus-item-icon.is-audio .folder-focus-file-badge,
+.folder-focus-item-icon.is-video .folder-focus-file-badge {
+  background: rgba(111, 128, 145, 0.18);
+  color: #8da0b1;
 }
 
 .folder-focus-item-icon.is-generic .folder-focus-file-badge {
