@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.0.5 - 2026-05-30
+
+### Fixed
+- Removed a CSS `!important` override flagged by Obsidian review.
+- Updated the README repository clone URL to the official `1spread/obsidian-folder-focus` repository.
+
+---
+
 ## 1.0.4 - 2026-05-30
 
 ### Added

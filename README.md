@@ -124,7 +124,7 @@ All commands are available via the command palette (`⌘+P` / `Ctrl+P`):
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/obsidian-folder-focus.git
+git clone https://github.com/1spread/obsidian-folder-focus.git
 cd obsidian-folder-focus
 
 # Install dependencies

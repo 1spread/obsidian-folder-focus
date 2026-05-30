@@ -470,10 +470,10 @@
   color: var(--text-muted);
 }
 
-.folder-focus-key {
+.folder-focus-table td.folder-focus-key {
   font-family: var(--font-monospace);
   font-weight: 500;
-  color: var(--text-normal) !important;
+  color: var(--text-normal);
   white-space: nowrap;
   width: 40%;
 }
