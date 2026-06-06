@@ -107,7 +107,7 @@ export class FolderFocusView extends ItemView {
 
     this.registerEvent(
       this.app.vault.on('delete', (file) => {
-        if (this.isInCurrentFolder(file)) {
+        if (this.isInCurrentFolder(file) || this.wasInCurrentFolder(file.path)) {
           void this.refreshCurrentFolder().catch((e) => {
             console.error('Folder focus: failed to refresh after delete', e);
           });
@@ -1127,6 +1127,7 @@ export class FolderFocusView extends ItemView {
 
   async deleteItem(item: TAbstractFile) {
     await this.app.fileManager.trashFile(item);
+    await this.refreshCurrentFolder();
   }
 
   async promptForName(currentName: string, title: string): Promise<string | null> {
