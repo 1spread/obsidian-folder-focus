@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.0.6 - 2026-06-08
+
+### Fixed
+- Prevented IME composition Enter/Escape events from triggering folder search actions.
+
+---
+
 ## 1.0.5 - 2026-05-30
 
 ### Fixed

@@ -1,7 +1,7 @@
 {
   "id": "folder-focus",
   "name": "Folder Focus",
-  "version": "1.0.5",
+  "version": "1.0.6",
   "minAppVersion": "1.7.2",
   "description": "Finder-like folder navigation view in the sidebar.",
   "author": "das",

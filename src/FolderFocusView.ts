@@ -59,6 +59,7 @@ export class FolderFocusView extends ItemView {
   searchEl!: HTMLInputElement;
   listEl!: HTMLElement;
   itemElements: HTMLElement[] = [];
+  searchInputComposing: boolean = false;
 
   constructor(leaf: WorkspaceLeaf, plugin: FolderFocusPlugin) {
     super(leaf);
@@ -370,8 +371,19 @@ export class FolderFocusView extends ItemView {
       clearBtn.toggleClass('is-hidden', !this.searchEl.value);
     });
 
+    this.searchEl.addEventListener('compositionstart', () => {
+      this.searchInputComposing = true;
+    });
+
+    this.searchEl.addEventListener('compositionend', () => {
+      this.searchInputComposing = false;
+      clearBtn.toggleClass('is-hidden', !this.searchEl.value);
+    });
+
     // Enter key to search, Escape to clear
     this.searchEl.addEventListener('keydown', (event: KeyboardEvent) => {
+      if (this.isSearchInputComposing(event)) return;
+
       void (async () => {
         if (event.key === 'Enter') {
           event.preventDefault();
@@ -817,6 +829,10 @@ export class FolderFocusView extends ItemView {
   }
 
   // --- Keyboard Navigation ---
+
+  private isSearchInputComposing(event: KeyboardEvent): boolean {
+    return this.searchInputComposing || event.isComposing || event.key === 'Process' || event.keyCode === 229;
+  }
 
   handleKeyDown(event: KeyboardEvent) {
     const isMod = event.metaKey || event.ctrlKey;
