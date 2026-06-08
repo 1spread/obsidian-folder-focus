@@ -1,4 +1,4 @@
-import { Plugin, WorkspaceLeaf, TFolder, Menu, PluginSettingTab, App, Setting } from 'obsidian';
+import { Plugin, WorkspaceLeaf, TFolder, Menu, PluginSettingTab, App, type SettingDefinitionItem } from 'obsidian';
 import { FolderFocusView, VIEW_TYPE_FOLDER_FOCUS } from './FolderFocusView';
 import {
   isSearchMode,
@@ -12,11 +12,42 @@ export interface FolderFocusSettings {
   defaultSearchMode: FolderFocusSearchMode;
 }
 
+type FolderFocusSettingControlKey = 'openInNewTab' | 'defaultSearchMode';
+
 const DEFAULT_SETTINGS: FolderFocusSettings = {
   openInNewTab: true,
   favoriteFolderPaths: [],
   defaultSearchMode: 'full-text',
 };
+
+const HOW_TO_STEPS: ReadonlyArray<readonly [string, string]> = [
+  ['Open folder focus', 'Click the folder icon in the left ribbon, or right-click any folder and select "Open in folder focus".'],
+  ['Navigate folders', 'Double-click a folder to enter it. Use Cmd+Up to go back to the parent folder.'],
+  ['Open files', 'Double-click a file to open it. Use Cmd+Double-click to open in a new tab.'],
+  ['Import from Finder', 'Drag files or folders from Finder into the folder focus list to copy them into the current folder.'],
+  ['Search', 'Type in the search box and press Enter to search file names and content across all subfolders.'],
+  ['Multi-select', 'Hold Cmd and click to select multiple items. Hold Shift and click for range selection.'],
+];
+
+const KEYBOARD_SHORTCUTS: ReadonlyArray<readonly [string, string]> = [
+  ['Up / Down', 'Move selection'],
+  ['Shift+Up / Down', 'Extend selection'],
+  ['Cmd+A', 'Select all'],
+  ['Cmd+Up', 'Parent folder'],
+  ['Cmd+Down / Enter', 'Enter folder or open file'],
+  ['Cmd+Enter', 'Open in new tab'],
+  ['Shift+Cmd+N', 'Create new note'],
+  ['Escape', 'Clear search'],
+];
+
+const MOUSE_ACTIONS: ReadonlyArray<readonly [string, string]> = [
+  ['Click', 'Select item'],
+  ['Cmd+Click', 'Toggle selection'],
+  ['Shift+Click', 'Range selection'],
+  ['Double-click', 'Enter folder or open file'],
+  ['Cmd+Double-click', 'Open in new tab'],
+  ['Right-click', 'Context menu'],
+];
 
 export default class FolderFocusPlugin extends Plugin {
   settings!: FolderFocusSettings;
@@ -205,122 +236,128 @@ class FolderFocusSettingTab extends PluginSettingTab {
     this.plugin = plugin;
   }
 
-  display(): void {
-    const { containerEl } = this;
-    containerEl.empty();
+  getSettingDefinitions(): SettingDefinitionItem<FolderFocusSettingControlKey>[] {
+    const favoriteCount = this.plugin.settings.favoriteFolderPaths.length;
+    const favoriteLabel = `${favoriteCount} favorite folder${favoriteCount === 1 ? '' : 's'} saved.`;
 
-    // How to Use section
-    const howtoEl = containerEl.createDiv({ cls: 'folder-focus-howto' });
-    new Setting(howtoEl).setName('How to use').setHeading();
-    const steps = howtoEl.createEl('ol');
-    const stepData = [
-      ['Open folder focus', 'Click the folder icon in the left ribbon, or right-click any folder and select "Open in folder focus".'],
-      ['Navigate folders', 'Double-click a folder to enter it. Use ⌘+↑ to go back to the parent folder.'],
-      ['Open files', 'Double-click a file to open it. Use ⌘+Double-click to open in a new tab.'],
-      ['Import from Finder', 'Drag files or folders from Finder into the folder focus list to copy them into the current folder.'],
-      ['Search', 'Type in the search box and press Enter to search file names and content across all subfolders.'],
-      ['Multi-select', 'Hold ⌘ and click to select multiple items. Hold Shift and click for range selection.'],
+    return [
+      {
+        type: 'group',
+        heading: 'How to use',
+        cls: 'folder-focus-howto',
+        items: HOW_TO_STEPS.map(([name, desc]) => ({ name, desc })),
+      },
+      {
+        type: 'group',
+        heading: 'Behavior',
+        items: [
+          {
+            name: 'Open files in new tab',
+            desc: 'When enabled, files will open in a new tab instead of the current one.',
+            control: {
+              type: 'toggle',
+              key: 'openInNewTab',
+              defaultValue: DEFAULT_SETTINGS.openInNewTab,
+            },
+          },
+          {
+            name: 'Default search mode',
+            desc: 'Choose whether Folder Focus searches file names only or file names plus Markdown note text by default.',
+            control: {
+              type: 'dropdown',
+              key: 'defaultSearchMode',
+              defaultValue: DEFAULT_SETTINGS.defaultSearchMode,
+              options: {
+                'full-text': 'Names + note text',
+                name: 'File names',
+              },
+              validate: (value) => isSearchMode(value) ? undefined : 'Choose a valid search mode.',
+            },
+          },
+          {
+            name: 'Remove missing favorite folders',
+            desc: `${favoriteLabel} Remove entries whose folders no longer exist.`,
+            action: () => {
+              void this.cleanMissingFavoriteFolders().catch((e) => {
+                console.error('Folder focus: failed to clean favorite folders', e);
+              });
+            },
+          },
+        ],
+      },
+      {
+        type: 'group',
+        heading: 'Keyboard shortcuts',
+        items: KEYBOARD_SHORTCUTS.map(([name, desc]) => ({ name, desc })),
+      },
+      {
+        type: 'group',
+        heading: 'Mouse actions',
+        items: MOUSE_ACTIONS.map(([name, desc]) => ({ name, desc })),
+      },
+      {
+        type: 'group',
+        heading: 'Support',
+        cls: 'folder-focus-support',
+        items: [
+          {
+            name: 'Buy Me a Coffee',
+            desc: 'If you find this plugin helpful, consider supporting its development.',
+            render: (setting) => {
+              setting
+                .setName('Buy Me a Coffee')
+                .setDesc('If you find this plugin helpful, consider supporting its development.')
+                .setClass('folder-focus-support');
+              const link = setting.controlEl.createEl('a', { href: 'https://buymeacoffee.com/1spread' });
+              const img = link.createEl('img', { cls: 'folder-focus-bmc-img' });
+              img.src = 'https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png';
+              img.alt = 'Buy Me A Coffee';
+            },
+          },
+        ],
+      },
     ];
-    for (const [title, desc] of stepData) {
-      const li = steps.createEl('li');
-      li.createEl('strong', { text: title });
-      li.createSpan({ text: ` — ${desc}` });
+  }
+
+  getControlValue(key: string): unknown {
+    if (key === 'openInNewTab') {
+      return this.plugin.settings.openInNewTab;
     }
 
-    // Options section
-    new Setting(containerEl).setName('Behavior').setHeading();
-
-    new Setting(containerEl)
-      .setName('Open files in new tab')
-      .setDesc('When enabled, files will open in a new tab instead of the current one.')
-      .addToggle((toggle) =>
-        toggle
-          .setValue(this.plugin.settings.openInNewTab)
-          .onChange((value) => {
-            this.plugin.settings.openInNewTab = value;
-            void this.plugin.saveSettings().catch((e) => {
-              console.error('Folder focus: failed to save settings', e);
-            });
-          })
-      );
-
-    new Setting(containerEl)
-      .setName('Default search mode')
-      .setDesc('Choose whether Folder Focus searches file names only or file names plus Markdown note text by default.')
-      .addDropdown((dropdown) =>
-        dropdown
-          .addOption('full-text', 'Names + note text')
-          .addOption('name', 'File names')
-          .setValue(this.plugin.settings.defaultSearchMode)
-          .onChange((value) => {
-            if (!isSearchMode(value)) return;
-            this.plugin.settings.defaultSearchMode = value;
-            void this.plugin.saveSettings().catch((e) => {
-              console.error('Folder focus: failed to save settings', e);
-            });
-          })
-      );
-
-    new Setting(containerEl)
-      .setName('Favorite folders')
-      .setDesc(`${this.plugin.settings.favoriteFolderPaths.length} favorite folder${this.plugin.settings.favoriteFolderPaths.length === 1 ? '' : 's'} saved.`)
-      .addButton((button) =>
-        button
-          .setButtonText('Remove missing')
-          .onClick(() => {
-            const existing = this.plugin.settings.favoriteFolderPaths.filter((path) => this.app.vault.getAbstractFileByPath(path) instanceof TFolder);
-            this.plugin.settings.favoriteFolderPaths = existing;
-            void this.plugin.saveSettings().then(() => this.display()).catch((e) => {
-              console.error('Folder focus: failed to clean favorite folders', e);
-            });
-          })
-      );
-
-    // Keyboard shortcuts (collapsible)
-    const shortcutsDetails = containerEl.createEl('details', { cls: 'folder-focus-details' });
-    shortcutsDetails.createEl('summary', { text: 'Keyboard shortcuts' });
-    const shortcutsTable = shortcutsDetails.createEl('table', { cls: 'folder-focus-table' });
-    const shortcuts = [
-      ['↑ / ↓', 'Move selection'],
-      ['Shift+↑ / ↓', 'Extend selection'],
-      ['⌘+A', 'Select all'],
-      ['⌘+↑', 'Parent folder'],
-      ['⌘+↓ / Enter', 'Enter folder or open file'],
-      ['⌘+Enter', 'Open in new tab'],
-      ['⇧⌘+N', 'Create new note'],
-      ['Escape', 'Clear search'],
-    ];
-    for (const [key, action] of shortcuts) {
-      const row = shortcutsTable.createEl('tr');
-      row.createEl('td', { text: key, cls: 'folder-focus-key' });
-      row.createEl('td', { text: action });
+    if (key === 'defaultSearchMode') {
+      return this.plugin.settings.defaultSearchMode;
     }
 
-    // Mouse actions (collapsible)
-    const mouseDetails = containerEl.createEl('details', { cls: 'folder-focus-details' });
-    mouseDetails.createEl('summary', { text: 'Mouse actions' });
-    const mouseTable = mouseDetails.createEl('table', { cls: 'folder-focus-table' });
-    const mouseActions = [
-      ['Click', 'Select item'],
-      ['⌘+Click', 'Toggle selection'],
-      ['Shift+Click', 'Range selection'],
-      ['Double-click', 'Enter folder or open file'],
-      ['⌘+Double-click', 'Open in new tab'],
-      ['Right-click', 'Context menu'],
-    ];
-    for (const [action, result] of mouseActions) {
-      const row = mouseTable.createEl('tr');
-      row.createEl('td', { text: action, cls: 'folder-focus-key' });
-      row.createEl('td', { text: result });
+    return undefined;
+  }
+
+  async setControlValue(key: string, value: unknown): Promise<void> {
+    if (key === 'openInNewTab') {
+      if (typeof value !== 'boolean') {
+        throw new Error('Open in new tab must be a boolean.');
+      }
+      this.plugin.settings.openInNewTab = value;
+      await this.plugin.saveSettings();
+      return;
     }
 
-    // Buy Me a Coffee
-    const supportEl = containerEl.createDiv({ cls: 'folder-focus-support' });
-    supportEl.createEl('p', { text: 'If you find this plugin helpful, consider supporting its development:' });
-    const link = supportEl.createEl('a', { href: 'https://buymeacoffee.com/1spread' });
-    const img = link.createEl('img', { cls: 'folder-focus-bmc-img' });
-    img.src = 'https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png';
-    img.alt = 'Buy Me A Coffee';
+    if (key === 'defaultSearchMode') {
+      if (!isSearchMode(value)) {
+        throw new Error('Default search mode must be a supported search mode.');
+      }
+      this.plugin.settings.defaultSearchMode = value;
+      await this.plugin.saveSettings();
+      return;
+    }
+
+    throw new Error(`Unknown Folder Focus setting: ${key}`);
+  }
+
+  private async cleanMissingFavoriteFolders(): Promise<void> {
+    const existing = this.plugin.settings.favoriteFolderPaths.filter((path) => this.app.vault.getAbstractFileByPath(path) instanceof TFolder);
+    this.plugin.settings.favoriteFolderPaths = existing;
+    await this.plugin.saveSettings();
+    this.update();
   }
 }
 

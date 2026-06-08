@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.1.1 - 2026-06-08
+
+### Fixed
+- Migrated the settings tab to Obsidian 1.13.0 declarative settings to resolve the deprecated `display()` review warning.
+
+---
+
 ## 1.1.0 - 2026-06-08
 
 ### Added

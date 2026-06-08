@@ -1,6 +1,6 @@
 {
   "name": "obsidian-folder-focus",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "Finder-like folder navigation for Obsidian",
   "main": "main.js",
   "scripts": {
@@ -14,7 +14,7 @@
   "devDependencies": {
     "@types/node": "^16.11.6",
     "esbuild": "0.25.5",
-    "obsidian": "latest",
+    "obsidian": "1.13.0",
     "tslib": "2.4.0",
     "typescript": "5.8.3"
   }
