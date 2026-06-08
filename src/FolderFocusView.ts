@@ -60,6 +60,7 @@ export class FolderFocusView extends ItemView {
   listEl!: HTMLElement;
   itemElements: HTMLElement[] = [];
   searchInputComposing: boolean = false;
+  searchInputCompositionEndedAt: number = 0;
 
   constructor(leaf: WorkspaceLeaf, plugin: FolderFocusPlugin) {
     super(leaf);
@@ -373,10 +374,12 @@ export class FolderFocusView extends ItemView {
 
     this.searchEl.addEventListener('compositionstart', () => {
       this.searchInputComposing = true;
+      this.searchInputCompositionEndedAt = 0;
     });
 
     this.searchEl.addEventListener('compositionend', () => {
       this.searchInputComposing = false;
+      this.searchInputCompositionEndedAt = Date.now();
       clearBtn.toggleClass('is-hidden', !this.searchEl.value);
     });
 
@@ -831,7 +834,8 @@ export class FolderFocusView extends ItemView {
   // --- Keyboard Navigation ---
 
   private isSearchInputComposing(event: KeyboardEvent): boolean {
-    return this.searchInputComposing || event.isComposing || event.key === 'Process' || event.keyCode === 229;
+    const compositionJustEnded = Date.now() - this.searchInputCompositionEndedAt < 50;
+    return this.searchInputComposing || compositionJustEnded || event.isComposing || event.key === 'Process';
   }
 
   handleKeyDown(event: KeyboardEvent) {

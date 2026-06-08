@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.0.7 - 2026-06-08
+
+### Fixed
+- Removed deprecated `KeyboardEvent.keyCode` usage from the IME-safe search key handling.
+
+---
+
 ## 1.0.6 - 2026-06-08
 
 ### Fixed
