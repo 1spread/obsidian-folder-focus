@@ -135,11 +135,95 @@
   height: 14px;
 }
 
+.folder-focus-path-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 4px;
+}
+
 .folder-focus-path {
+  flex: 1;
+  min-width: 0;
   font-size: 11px;
   color: var(--text-muted);
   font-family: var(--font-monospace);
-  margin-top: 4px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.folder-focus-favorite-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 4px;
+  background: var(--background-primary);
+  color: var(--text-muted);
+  cursor: pointer;
+  outline: none;
+}
+
+.folder-focus-favorite-toggle:hover,
+.folder-focus-favorite-toggle.is-favorite {
+  border-color: var(--interactive-accent);
+  color: var(--interactive-accent);
+}
+
+.folder-focus-favorite-toggle svg {
+  width: 14px;
+  height: 14px;
+}
+
+.folder-focus-favorites {
+  margin-top: 8px;
+}
+
+.folder-focus-favorites-label {
+  color: var(--text-muted);
+  font-size: 11px;
+  margin-bottom: 4px;
+}
+
+.folder-focus-favorites-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.folder-focus-favorite-item {
+  max-width: 100%;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 6px;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 6px;
+  background: var(--background-primary);
+  color: var(--text-muted);
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.folder-focus-favorite-item:hover {
+  border-color: var(--interactive-accent);
+  color: var(--text-normal);
+}
+
+.folder-focus-favorite-item span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.folder-focus-favorite-item svg {
+  flex-shrink: 0;
+  width: 13px;
+  height: 13px;
 }
 
 /* Search box */
@@ -524,31 +608,105 @@
   color: var(--text-normal);
 }
 
+.folder-focus-search-mode {
+  display: flex;
+  gap: 2px;
+  margin-top: 6px;
+  padding: 2px;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 6px;
+  background: var(--background-secondary);
+}
+
+.folder-focus-search-mode-button {
+  flex: 1 1 0;
+  min-width: 0;
+  padding: 3px 6px;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 11px;
+  line-height: 1.3;
+  cursor: pointer;
+}
+
+.folder-focus-search-mode-button:hover {
+  color: var(--text-normal);
+}
+
+.folder-focus-search-mode-button.is-active {
+  background: var(--background-primary);
+  color: var(--text-normal);
+}
+
+.folder-focus-search-highlight {
+  border-radius: 3px;
+  background: var(--text-highlight-bg);
+  color: var(--text-normal);
+}
+
 /* Drag and drop */
 .folder-focus-item.is-dragging {
   opacity: 0.5;
 }
 
 .folder-focus-item.is-drop-target {
-  background: var(--interactive-accent);
-  color: var(--text-on-accent);
+  outline: 2px solid var(--interactive-accent);
+  outline-offset: -2px;
+  background: var(--background-modifier-hover);
 }
 
 .folder-focus-item.is-drop-target .folder-focus-item-icon,
 .folder-focus-item.is-drop-target .folder-focus-item-name,
 .folder-focus-item.is-drop-target .folder-focus-item-chevron {
-  color: var(--text-on-accent);
+  color: var(--text-normal);
 }
 
 .folder-focus-item.is-drop-invalid {
+  outline: 2px solid var(--text-error);
+  outline-offset: -2px;
   background: var(--background-modifier-error);
-  opacity: 0.7;
+}
+
+.folder-focus-item.is-drop-target::after,
+.folder-focus-item.is-drop-invalid::after {
+  content: attr(data-drop-label);
+  min-width: 0;
+  margin-left: auto;
+  padding: 2px 6px;
+  border-radius: 999px;
+  font-size: 10px;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+.folder-focus-item.is-drop-target::after {
+  background: var(--interactive-accent);
+  color: var(--text-on-accent);
+}
+
+.folder-focus-item.is-drop-invalid::after {
+  background: var(--background-primary);
+  color: var(--text-error);
 }
 
 .folder-focus-list.is-external-drop-target {
   background: var(--background-modifier-hover);
-  outline: 1px dashed var(--interactive-accent);
+  outline: 2px dashed var(--interactive-accent);
   outline-offset: -4px;
+}
+
+.folder-focus-list.is-external-drop-target::before {
+  content: attr(data-drop-label);
+  display: block;
+  margin: 8px;
+  padding: 6px 8px;
+  border-radius: 6px;
+  background: var(--interactive-accent);
+  color: var(--text-on-accent);
+  font-size: 12px;
+  text-align: center;
 }
 
 /* Rename modal */

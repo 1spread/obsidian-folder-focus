@@ -2,13 +2,13 @@
 
 A Finder-like folder navigation view for [Obsidian](https://obsidian.md).
 
-## Obsidian Community Plugin Submission
+## Screenshots
 
-- Obsidian `obsidianmd/obsidian-releases` PR: [#10059](https://github.com/obsidianmd/obsidian-releases/pull/10059)
-- When ObsidianReviewBot requests changes:
-  - Fix issues in this repository and **push to the same branch** (no new PR needed).
-  - **Do not rebase** the submission branch (reviewers will handle it after approval).
-  - The bot will re-scan automatically (it may take **up to ~6 hours** after pushing changes).
+![Folder Focus animated demo showing folder navigation and file badges](docs/assets/folder-focus-demo.gif)
+
+| Folder view | Search and file badges |
+|-------------|------------------------|
+| ![Folder Focus showing folders and Obsidian Base file badges](docs/assets/folder-focus-base-view.png) | ![Folder Focus search results showing Markdown, Excel, and Python file badges](docs/assets/folder-focus-search-badges.png) |
 
 ## Features
 
@@ -16,6 +16,7 @@ A Finder-like folder navigation view for [Obsidian](https://obsidian.md).
 - **Focused folder view** in the right sidebar
 - **Finder-compatible keyboard shortcuts**
 - **Selection history** - remembers your position when navigating back
+- **Favorite folders** - pin folders and jump back to them from the header
 - **Live refresh** - automatically updates when files change externally (e.g., in Finder)
 
 ### File Operations
@@ -23,12 +24,18 @@ A Finder-like folder navigation view for [Obsidian](https://obsidian.md).
 - **Context menu** - right-click for file operations
 - **New folder/note buttons** - quick creation from the header
 - **Rename/Delete folders** - directly from context menu
+- **Create folder with selection** - group selected items into a new folder
+- **Move items between folders** - drag selected items onto a folder row
+- **Import from Finder** - drag external files or folders into the current folder or a folder row
+- **Clear drag feedback** - valid, invalid, and import drop targets are shown while dragging
 
 ### Search
-- **Full-text search** - search file names and content
+- **Search mode toggle** - switch between file-name search and file names plus Markdown note text
 - **Subfolder search** - includes all nested files
 - **Folders only filter** - toggle to show only folders
+- **Highlighted matches** - matching file and folder name text is highlighted in results
 - **Clear button** - quickly reset search
+- **IME-safe search shortcuts** - composition Enter/Escape events do not accidentally run or clear searches
 
 ### Opening Files
 - **Single click** - select item
@@ -36,22 +43,55 @@ A Finder-like folder navigation view for [Obsidian](https://obsidian.md).
 - **Cmd+Double click** - open file in new tab
 - **Cmd+Enter** - open selected file in new tab
 
+### File Type Badges
+- Compact badges for Markdown, Obsidian Canvas, Obsidian Base, documents, spreadsheets, presentations, PDFs, images, code, JSON, text, diagrams, ebooks, databases, design files, fonts, configs, notebooks, archives, audio, and video files
+
+## Supported File Types
+
+Folder Focus can show compact badges for these file extensions:
+
+| Type | Extensions |
+|------|------------|
+| Markdown | `md`, `markdown` |
+| Obsidian | `canvas`, `base` |
+| Text | `txt`, `rtf` |
+| Documents | `doc`, `docx`, `pages`, `odt`, `gdoc` |
+| Presentations | `ppt`, `pptx`, `pptm`, `pps`, `ppsx`, `key`, `keynote`, `odp`, `gslides` |
+| Spreadsheets | `xls`, `xlsx`, `xlsm`, `xlsb`, `numbers`, `ods`, `gsheet`, `csv`, `tsv` |
+| PDF | `pdf` |
+| Images | `png`, `jpg`, `jpeg`, `gif`, `webp`, `svg`, `bmp`, `avif`, `heic` |
+| Design | `fig`, `sketch`, `psd`, `psb`, `ai`, `eps`, `xd`, `afdesign` |
+| Diagrams | `drawio`, `diagram`, `mmd`, `mermaid`, `excalidraw` |
+| Ebooks | `epub`, `mobi`, `azw`, `azw3` |
+| Databases | `db`, `sqlite`, `sqlite3` |
+| Fonts | `ttf`, `otf`, `woff`, `woff2` |
+| Data and config | `json`, `toml`, `ini`, `env` |
+| Notebooks | `ipynb` |
+| Code | `js`, `ts`, `jsx`, `tsx`, `css`, `scss`, `html`, `xml`, `yaml`, `yml`, `sh`, `bash`, `zsh`, `go`, `rs`, `java`, `kt`, `swift`, `c`, `h`, `cpp`, `hpp`, `cs`, `php`, `rb`, `py`, `pyw` |
+| Archives | `zip`, `7z`, `rar`, `tar`, `gz` |
+| Audio | `mp3`, `wav`, `m4a`, `flac`, `ogg` |
+| Video | `mp4`, `mov`, `mkv`, `webm`, `avi` |
+
+Other files still appear in the list with a generic file badge.
+
 ### Sorting
 - Sort by **name**, **modified date**, or **created date**
 - Toggle **ascending/descending** order
 
 ## Installation
 
-### From Obsidian Community Plugins (Recommended)
+### From Obsidian Community Plugins
+
+Folder Focus is listed in Obsidian Community Plugins. Obsidian currently marks it as not manually reviewed by Obsidian staff.
 
 1. Open Obsidian Settings
-2. Go to Community plugins and disable Safe mode
+2. Go to Community plugins
 3. Click Browse and search for "Folder Focus"
 4. Install and enable the plugin
 
 ### Manual Installation
 
-1. Download `main.js`, `manifest.json`, and `styles.css` from the latest release
+1. Download `main.js`, `manifest.json`, and `styles.css` from the [latest release](https://github.com/1spread/obsidian-folder-focus/releases/latest)
 2. Create a folder `obsidian-folder-focus` in your vault's `.obsidian/plugins/` directory
 3. Copy the downloaded files into this folder
 4. Reload Obsidian and enable the plugin in Settings → Community plugins
@@ -88,11 +128,14 @@ A Finder-like folder navigation view for [Obsidian](https://obsidian.md).
 | Double click | Enter folder or open file |
 | Cmd/Ctrl + Double click | Open file in new tab |
 | Right click | Context menu |
+| Drag selected items onto a folder | Move selected items into that folder |
+| Drag Finder files/folders into the view | Import them into the vault folder |
 
 ### Context Menu Options
 
 - **Rename folder** - rename the selected folder
 - **Delete folder** - move folder to trash
+- **Add/Remove from favorites** - pin or unpin a folder
 - **Create folder with selection** - create new folder with selected items
 - Standard Obsidian file menu options
 
@@ -120,6 +163,13 @@ All commands are available via the command palette (`⌘+P` / `Ctrl+P`):
 
 - **Open files in new tab** - When enabled, files open in a new tab instead of the current one
 
+## Releases
+
+- Current version: `1.1.0`
+- Minimum Obsidian version: `1.7.2`
+- Release downloads: [GitHub Releases](https://github.com/1spread/obsidian-folder-focus/releases/latest)
+- Full history: [CHANGELOG.md](CHANGELOG.md)
+
 ## Development
 
 ```bash
@@ -141,7 +191,7 @@ npm run build
 
 If you find this plugin helpful, consider supporting its development:
 
-<a href="https://buymeacoffee.com/1spread"><img src="https://img.buymeacoffee.com/button-api/?text=Buy me a coffee&emoji=☕&slug=1spread&button_colour=FFDD00&font_colour=000000&font_family=Cookie&outline_colour=000000&coffee_colour=ffffff" /></a>
+[Buy me a coffee](https://buymeacoffee.com/1spread)
 
 ## License
 
