@@ -13,7 +13,7 @@ Merge `codex/favorites-search-drag-feedback` into `main` and push the updated `m
 - [x] Update local `main` from `1spread/main`.
 - [x] Merge `codex/favorites-search-drag-feedback` into `main`.
 - [x] Run verification after merge.
-- [ ] Push `main` to `1spread`.
+- [x] Push `main` to `1spread`.
 - [x] Record final result.
 
 ## Notes
@@ -26,3 +26,4 @@ Merge `codex/favorites-search-drag-feedback` into `main` and push the updated `m
 - `npm run test` passed on `main` after merge.
 - `npm run build` passed on `main` after merge.
 - `git diff --check HEAD~1 HEAD` passed after merge.
+- Pushed `main` to `1spread`.
