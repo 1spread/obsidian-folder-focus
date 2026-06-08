@@ -937,8 +937,15 @@ Do not bump versions until implementation and verification are complete.
 - [x] Re-run tests after version bump.
 - [x] Re-run production build after version bump.
 - [x] Check git diff for whitespace/link issues.
-- [ ] Commit release changes.
-- [ ] Push branch to remote.
+- [x] Commit release changes.
+- [x] Push branch to remote.
+
+## Release Verification - 2026-06-08
+
+- `npm run test` passed after the `1.1.0` version bump.
+- `npm run build` passed after the `1.1.0` version bump.
+- `git diff --check` passed after the README version update.
+- Pushed `codex/favorites-search-drag-feedback` to `1spread`.
 - Updated README feature bullets for favorites, search mode, highlighting, and drag feedback.
 
 ## Verification - 2026-06-08
