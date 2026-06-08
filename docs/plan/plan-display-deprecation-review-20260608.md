@@ -11,7 +11,7 @@ Fix the Obsidian community review warning for deprecated `PluginSettingTab.displ
 - [x] Migrate the settings tab from imperative `display()` rendering to declarative `getSettingDefinitions()`.
 - [x] Bump release metadata to `1.1.1` with `minAppVersion` `1.13.0`.
 - [x] Run tests, build, and source cleanup checks.
-- [ ] Commit, push to `1spread/main`, tag `1.1.1`, and verify the GitHub Release.
+- [x] Commit, push to `1spread/main`, tag `1.1.1`, and verify the GitHub Release.
 
 ## Notes
 
@@ -25,3 +25,13 @@ Fix the Obsidian community review warning for deprecated `PluginSettingTab.displ
 - `npm run test` passed.
 - `npm run build` passed.
 - Manual Obsidian settings UI smoke testing was not run in this automated workspace.
+- Committed implementation as `016bee6`.
+- Pushed `main` to `1spread`.
+- Pushed tag `1.1.1` to `1spread`.
+- GitHub Actions release run `27145577501` completed successfully.
+- GitHub Release `1.1.1` is published and is not a draft or prerelease.
+- Release assets verified:
+  - `main.js`
+  - `manifest.json`
+  - `styles.css`
+- Artifact attestations verified for `main.js`, `manifest.json`, and `styles.css` with GitHub CLI using a temporary Sigstore cache.
