@@ -1,6 +1,12 @@
 import { ItemView, WorkspaceLeaf, TFile, TFolder, TAbstractFile, Menu, Modal, App, setIcon, Notice, Platform, normalizePath } from 'obsidian';
 import { getFileTypeBadge as getBadgeForExtension } from './fileTypeBadge';
 import type { FileTypeBadge } from './fileTypeBadge';
+import {
+  getHighlightSegments,
+  normalizeSearchQuery,
+  shouldSearchContent,
+  type FolderFocusSearchMode,
+} from './searchUtils';
 import type FolderFocusPlugin from './main';
 
 export const VIEW_TYPE_FOLDER_FOCUS = 'folder-focus-view';
@@ -41,6 +47,7 @@ export class FolderFocusView extends ItemView {
   sortOrder: SortOrder = 'name';
   sortDirection: SortDirection = 'asc';
   searchQuery: string = '';
+  searchMode: FolderFocusSearchMode;
 
   // Selection state
   selectedIndices: Set<number> = new Set([0]);  // Multiple selection
@@ -65,6 +72,7 @@ export class FolderFocusView extends ItemView {
   constructor(leaf: WorkspaceLeaf, plugin: FolderFocusPlugin) {
     super(leaf);
     this.plugin = plugin;
+    this.searchMode = plugin.settings.defaultSearchMode;
   }
 
   getViewType(): string {
@@ -244,6 +252,57 @@ export class FolderFocusView extends ItemView {
     return getBadgeForExtension(file.extension);
   }
 
+  private getExistingFavoriteFolders(): TFolder[] {
+    return this.plugin.settings.favoriteFolderPaths
+      .map((path) => this.app.vault.getAbstractFileByPath(path))
+      .filter((file): file is TFolder => file instanceof TFolder);
+  }
+
+  private async toggleCurrentFolderFavorite(): Promise<void> {
+    if (!this.currentFolder) return;
+    await this.plugin.toggleFavoriteFolder(this.currentFolder.path);
+    this.renderHeader();
+  }
+
+  private async setSearchMode(mode: FolderFocusSearchMode): Promise<void> {
+    this.searchQuery = this.searchEl?.value ?? this.searchQuery;
+    this.searchMode = mode;
+    this.plugin.settings.defaultSearchMode = mode;
+    await this.plugin.saveSettings();
+    this.renderHeader();
+    if (this.searchQuery.trim()) {
+      await this.applyFilter();
+      this.renderList();
+    }
+  }
+
+  private renderItemName(nameEl: HTMLElement, itemName: string): void {
+    nameEl.empty();
+    const segments = this.searchQuery.trim()
+      ? getHighlightSegments(itemName, this.searchQuery)
+      : [{ text: itemName, match: false }];
+
+    for (const segment of segments) {
+      if (segment.match) {
+        nameEl.createSpan({ cls: 'folder-focus-search-highlight', text: segment.text });
+      } else {
+        nameEl.createSpan({ text: segment.text });
+      }
+    }
+  }
+
+  private clearDragFeedback(): void {
+    this.listEl.removeClass('is-folder-focus-dragging');
+    this.listEl.removeClass('is-external-drop-target');
+    this.listEl.removeAttribute('data-drop-label');
+    this.itemElements.forEach((el) => {
+      el.removeClass('is-dragging');
+      el.removeClass('is-drop-target');
+      el.removeClass('is-drop-invalid');
+      el.removeAttribute('data-drop-label');
+    });
+  }
+
   // --- Rendering ---
 
   renderAll() {
@@ -334,8 +393,35 @@ export class FolderFocusView extends ItemView {
       });
     });
 
-    const pathEl = this.headerEl.createDiv({ cls: 'folder-focus-path' });
+    const pathRowEl = this.headerEl.createDiv({ cls: 'folder-focus-path-row' });
+    const pathEl = pathRowEl.createDiv({ cls: 'folder-focus-path' });
     pathEl.setText(this.currentFolder.path || '/');
+
+    const favoriteBtn = pathRowEl.createEl('button', { cls: 'folder-focus-favorite-toggle' });
+    const isFavorite = this.plugin.isFavoriteFolder(this.currentFolder.path);
+    setIcon(favoriteBtn, isFavorite ? 'star' : 'star-off');
+    favoriteBtn.setAttribute('aria-label', isFavorite ? 'Remove current folder from favorites' : 'Add current folder to favorites');
+    favoriteBtn.toggleClass('is-favorite', isFavorite);
+    favoriteBtn.addEventListener('click', () => {
+      void this.toggleCurrentFolderFavorite().catch((e) => {
+        console.error('Folder focus: failed to toggle favorite folder', e);
+      });
+    });
+
+    const favoriteFolders = this.getExistingFavoriteFolders();
+    if (favoriteFolders.length > 0) {
+      const favoritesEl = this.headerEl.createDiv({ cls: 'folder-focus-favorites' });
+      favoritesEl.createDiv({ cls: 'folder-focus-favorites-label', text: 'Favorites' });
+      const favoriteListEl = favoritesEl.createDiv({ cls: 'folder-focus-favorites-list' });
+
+      for (const folder of favoriteFolders) {
+        const favoriteItem = favoriteListEl.createEl('button', { cls: 'folder-focus-favorite-item' });
+        setIcon(favoriteItem, 'folder');
+        favoriteItem.createSpan({ text: folder.name || '/' });
+        favoriteItem.setAttribute('aria-label', `Open favorite folder ${folder.path || '/'}`);
+        favoriteItem.addEventListener('click', () => this.setFolder(folder));
+      }
+    }
 
     // Search box with clear button
     const searchContainer = this.headerEl.createDiv({ cls: 'folder-focus-search' });
@@ -429,13 +515,32 @@ export class FolderFocusView extends ItemView {
         console.error('Folder focus: failed to toggle folders-only filter', e);
       });
     });
+
+    const searchModeEl = searchContainer.createDiv({ cls: 'folder-focus-search-mode' });
+    const nameModeBtn = searchModeEl.createEl('button', { text: 'File names', cls: 'folder-focus-search-mode-button' });
+    const fullTextModeBtn = searchModeEl.createEl('button', { text: 'Names + note text', cls: 'folder-focus-search-mode-button' });
+
+    nameModeBtn.toggleClass('is-active', this.searchMode === 'name');
+    fullTextModeBtn.toggleClass('is-active', this.searchMode === 'full-text');
+
+    nameModeBtn.addEventListener('click', () => {
+      void this.setSearchMode('name').catch((e) => {
+        console.error('Folder focus: failed to set search mode', e);
+      });
+    });
+
+    fullTextModeBtn.addEventListener('click', () => {
+      void this.setSearchMode('full-text').catch((e) => {
+        console.error('Folder focus: failed to set search mode', e);
+      });
+    });
   }
 
   async applyFilter() {
     if (!this.searchQuery.trim()) {
       this.filteredItems = this.items;
     } else {
-      const query = this.searchQuery.toLowerCase();
+      const query = normalizeSearchQuery(this.searchQuery);
       const matchedItems: TAbstractFile[] = [];
 
       // Search all files recursively (including subfolders)
@@ -452,7 +557,12 @@ export class FolderFocusView extends ItemView {
         }
 
         // Match by file content (for markdown files only, skip if folders only)
-        if (!this.searchFoldersOnly && item instanceof TFile && item.extension === 'md') {
+        if (
+          shouldSearchContent(this.searchMode)
+          && !this.searchFoldersOnly
+          && item instanceof TFile
+          && item.extension === 'md'
+        ) {
           try {
             const content = await this.app.vault.cachedRead(item);
             if (content.toLowerCase().includes(query)) {
@@ -515,7 +625,7 @@ export class FolderFocusView extends ItemView {
 
       // Name
       const nameEl = itemEl.createSpan({ cls: 'folder-focus-item-name' });
-      nameEl.setText(item.name);
+      this.renderItemName(nameEl, item.name);
 
       // Chevron for folders
       if (isFolder) {
@@ -612,6 +722,21 @@ export class FolderFocusView extends ItemView {
               });
           });
 
+          const favoriteTitle = this.plugin.isFavoriteFolder(item.path) ? 'Remove from favorites' : 'Add to favorites';
+          const favoriteIcon = this.plugin.isFavoriteFolder(item.path) ? 'star-off' : 'star';
+          menu.addItem((menuItem) => {
+            menuItem
+              .setTitle(favoriteTitle)
+              .setIcon(favoriteIcon)
+              .onClick(() => {
+                void this.plugin.toggleFavoriteFolder(item.path).then(() => {
+                  this.renderHeader();
+                }).catch((e) => {
+                  console.error('Folder focus: failed to toggle folder favorite', e);
+                });
+              });
+          });
+
           menu.addSeparator();
         } else {
           // File-specific options
@@ -675,6 +800,8 @@ export class FolderFocusView extends ItemView {
         event.preventDefault();
         event.stopPropagation();
         if (event.dataTransfer) event.dataTransfer.dropEffect = 'copy';
+        const targetFolder = item instanceof TFolder ? item : this.currentFolder;
+        itemEl.setAttribute('data-drop-label', `Import to ${targetFolder?.name || '/'}`);
         itemEl.addClass('is-drop-target');
       });
 
@@ -682,6 +809,8 @@ export class FolderFocusView extends ItemView {
         if (!this.isExternalFileDrag(event)) return;
         event.preventDefault();
         event.stopPropagation();
+        const targetFolder = item instanceof TFolder ? item : this.currentFolder;
+        itemEl.setAttribute('data-drop-label', `Import to ${targetFolder?.name || '/'}`);
         itemEl.addClass('is-drop-target');
       });
 
@@ -690,6 +819,7 @@ export class FolderFocusView extends ItemView {
         const rt = event.relatedTarget;
         if (rt instanceof Node && !itemEl.contains(rt)) {
           itemEl.removeClass('is-drop-target');
+          itemEl.removeAttribute('data-drop-label');
         }
       });
 
@@ -698,7 +828,7 @@ export class FolderFocusView extends ItemView {
         void (async () => {
           event.preventDefault();
           event.stopPropagation();
-          itemEl.removeClass('is-drop-target');
+          this.clearDragFeedback();
           const targetFolder = item instanceof TFolder ? item : this.currentFolder;
           if (!targetFolder) return;
           await this.importExternalDrop(event, targetFolder);
@@ -733,6 +863,7 @@ export class FolderFocusView extends ItemView {
           paths: selectedPaths,
         }));
         dt.effectAllowed = 'move';
+        this.listEl.addClass('is-folder-focus-dragging');
 
         // Add visual feedback
         this.selectedIndices.forEach(i => {
@@ -742,11 +873,7 @@ export class FolderFocusView extends ItemView {
 
       itemEl.addEventListener('dragend', () => {
         // Clean up drag visual state
-        this.itemElements.forEach(el => {
-          el.removeClass('is-dragging');
-          el.removeClass('is-drop-target');
-          el.removeClass('is-drop-invalid');
-        });
+        this.clearDragFeedback();
       });
 
       // Drop target events - only for folders
@@ -763,10 +890,12 @@ export class FolderFocusView extends ItemView {
 
           if (isInvalidTarget) {
             if (event.dataTransfer) event.dataTransfer.dropEffect = 'none';
+            itemEl.setAttribute('data-drop-label', 'Cannot drop here');
             itemEl.removeClass('is-drop-target');
             itemEl.addClass('is-drop-invalid');
           } else {
             if (event.dataTransfer) event.dataTransfer.dropEffect = 'move';
+            itemEl.setAttribute('data-drop-label', `Move to ${targetFolder.name || '/'}`);
             itemEl.addClass('is-drop-target');
             itemEl.removeClass('is-drop-invalid');
           }
@@ -781,14 +910,14 @@ export class FolderFocusView extends ItemView {
           if (rt instanceof Node && !itemEl.contains(rt)) {
             itemEl.removeClass('is-drop-target');
             itemEl.removeClass('is-drop-invalid');
+            itemEl.removeAttribute('data-drop-label');
           }
         });
 
         itemEl.addEventListener('drop', (event: DragEvent) => {
           void (async () => {
             event.preventDefault();
-            itemEl.removeClass('is-drop-target');
-            itemEl.removeClass('is-drop-invalid');
+            this.clearDragFeedback();
 
             const dragData = this.getDragData(event);
             if (!dragData) return;
@@ -1166,12 +1295,14 @@ export class FolderFocusView extends ItemView {
       if (!this.isExternalFileDrag(event)) return;
       event.preventDefault();
       if (event.dataTransfer) event.dataTransfer.dropEffect = 'copy';
+      this.listEl.setAttribute('data-drop-label', 'Drop to import into current folder');
       this.listEl.addClass('is-external-drop-target');
     });
 
     this.registerDomEvent(this.listEl, 'dragenter', (event: DragEvent) => {
       if (!this.isExternalFileDrag(event)) return;
       event.preventDefault();
+      this.listEl.setAttribute('data-drop-label', 'Drop to import into current folder');
       this.listEl.addClass('is-external-drop-target');
     });
 
@@ -1179,7 +1310,7 @@ export class FolderFocusView extends ItemView {
       if (!this.isExternalFileDrag(event)) return;
       const rt = event.relatedTarget;
       if (rt instanceof Node && !this.listEl.contains(rt)) {
-        this.listEl.removeClass('is-external-drop-target');
+        this.clearDragFeedback();
       }
     });
 
@@ -1187,7 +1318,7 @@ export class FolderFocusView extends ItemView {
       if (!this.isExternalFileDrag(event)) return;
       void (async () => {
         event.preventDefault();
-        this.listEl.removeClass('is-external-drop-target');
+        this.clearDragFeedback();
         if (!this.currentFolder) return;
         await this.importExternalDrop(event, this.currentFolder);
       })().catch((e) => {

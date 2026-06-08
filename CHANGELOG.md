@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.1.0 - 2026-06-08
+
+### Added
+- Added favorite folders with quick access chips and add/remove actions.
+- Added a search mode toggle for file-name search vs names plus Markdown note text.
+- Added highlighted file and folder name matches in search results.
+- Added clearer drag/drop feedback for valid, invalid, and external drop targets.
+- Updated the README with screenshots, a GIF demo, and supported file formats.
+
+---
+
 ## 1.0.7 - 2026-06-08
 
 ### Fixed

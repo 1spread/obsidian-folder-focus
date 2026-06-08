@@ -1,12 +1,21 @@
 import { Plugin, WorkspaceLeaf, TFolder, Menu, PluginSettingTab, App, Setting } from 'obsidian';
 import { FolderFocusView, VIEW_TYPE_FOLDER_FOCUS } from './FolderFocusView';
+import {
+  isSearchMode,
+  normalizeFavoriteFolderPaths,
+  type FolderFocusSearchMode,
+} from './searchUtils';
 
-interface FolderFocusSettings {
+export interface FolderFocusSettings {
   openInNewTab: boolean;
+  favoriteFolderPaths: string[];
+  defaultSearchMode: FolderFocusSearchMode;
 }
 
 const DEFAULT_SETTINGS: FolderFocusSettings = {
   openInNewTab: true,
+  favoriteFolderPaths: [],
+  defaultSearchMode: 'full-text',
 };
 
 export default class FolderFocusPlugin extends Plugin {
@@ -123,14 +132,45 @@ export default class FolderFocusPlugin extends Plugin {
 
   async loadSettings() {
     const loadedData: unknown = await this.loadData();
+    const candidate = isFolderFocusSettings(loadedData) ? loadedData : {};
+
     this.settings = {
       ...DEFAULT_SETTINGS,
-      ...(isFolderFocusSettings(loadedData) ? loadedData : {}),
+      openInNewTab: typeof candidate.openInNewTab === 'boolean'
+        ? candidate.openInNewTab
+        : DEFAULT_SETTINGS.openInNewTab,
+      favoriteFolderPaths: normalizeFavoriteFolderPaths(candidate.favoriteFolderPaths),
+      defaultSearchMode: isSearchMode(candidate.defaultSearchMode)
+        ? candidate.defaultSearchMode
+        : DEFAULT_SETTINGS.defaultSearchMode,
     };
   }
 
   async saveSettings() {
     await this.saveData(this.settings);
+  }
+
+  isFavoriteFolder(path: string): boolean {
+    return this.settings.favoriteFolderPaths.includes(path);
+  }
+
+  async addFavoriteFolder(path: string): Promise<void> {
+    if (this.isFavoriteFolder(path)) return;
+    this.settings.favoriteFolderPaths = [...this.settings.favoriteFolderPaths, path];
+    await this.saveSettings();
+  }
+
+  async removeFavoriteFolder(path: string): Promise<void> {
+    this.settings.favoriteFolderPaths = this.settings.favoriteFolderPaths.filter((favoritePath) => favoritePath !== path);
+    await this.saveSettings();
+  }
+
+  async toggleFavoriteFolder(path: string): Promise<void> {
+    if (this.isFavoriteFolder(path)) {
+      await this.removeFavoriteFolder(path);
+    } else {
+      await this.addFavoriteFolder(path);
+    }
   }
 
   getView(): FolderFocusView | null {
@@ -204,6 +244,38 @@ class FolderFocusSettingTab extends PluginSettingTab {
           })
       );
 
+    new Setting(containerEl)
+      .setName('Default search mode')
+      .setDesc('Choose whether Folder Focus searches file names only or file names plus Markdown note text by default.')
+      .addDropdown((dropdown) =>
+        dropdown
+          .addOption('full-text', 'Names + note text')
+          .addOption('name', 'File names')
+          .setValue(this.plugin.settings.defaultSearchMode)
+          .onChange((value) => {
+            if (!isSearchMode(value)) return;
+            this.plugin.settings.defaultSearchMode = value;
+            void this.plugin.saveSettings().catch((e) => {
+              console.error('Folder focus: failed to save settings', e);
+            });
+          })
+      );
+
+    new Setting(containerEl)
+      .setName('Favorite folders')
+      .setDesc(`${this.plugin.settings.favoriteFolderPaths.length} favorite folder${this.plugin.settings.favoriteFolderPaths.length === 1 ? '' : 's'} saved.`)
+      .addButton((button) =>
+        button
+          .setButtonText('Remove missing')
+          .onClick(() => {
+            const existing = this.plugin.settings.favoriteFolderPaths.filter((path) => this.app.vault.getAbstractFileByPath(path) instanceof TFolder);
+            this.plugin.settings.favoriteFolderPaths = existing;
+            void this.plugin.saveSettings().then(() => this.display()).catch((e) => {
+              console.error('Folder focus: failed to clean favorite folders', e);
+            });
+          })
+      );
+
     // Keyboard shortcuts (collapsible)
     const shortcutsDetails = containerEl.createEl('details', { cls: 'folder-focus-details' });
     shortcutsDetails.createEl('summary', { text: 'Keyboard shortcuts' });
@@ -252,10 +324,15 @@ class FolderFocusSettingTab extends PluginSettingTab {
   }
 }
 
-function isFolderFocusSettings(value: unknown): value is Partial<FolderFocusSettings> {
+interface FolderFocusSettingsCandidate {
+  openInNewTab?: unknown;
+  favoriteFolderPaths?: unknown;
+  defaultSearchMode?: unknown;
+}
+
+function isFolderFocusSettings(value: unknown): value is FolderFocusSettingsCandidate {
   if (typeof value !== 'object' || value === null) {
     return false;
   }
-  const candidate = value as { openInNewTab?: unknown };
-  return candidate.openInNewTab === undefined || typeof candidate.openInNewTab === 'boolean';
+  return true;
 }

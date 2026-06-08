@@ -1,12 +1,12 @@
 {
   "name": "obsidian-folder-focus",
-  "version": "1.0.7",
+  "version": "1.1.0",
   "description": "Finder-like folder navigation for Obsidian",
   "main": "main.js",
   "scripts": {
     "dev": "node esbuild.config.mjs",
     "build": "tsc -noEmit -skipLibCheck && node esbuild.config.mjs production",
-    "test": "node --test tests/fileTypeBadge.test.mjs"
+    "test": "node --test tests/*.test.mjs"
   },
   "keywords": [],
   "author": "das",
