@@ -11,7 +11,7 @@ Update the release workflow so GitHub Actions uses Node 24-compatible actions an
 - [x] Verify current official action versions support Node 24.
 - [x] Update `.github/workflows/release.yml`.
 - [x] Validate the workflow syntax enough for this repository.
-- [ ] Commit and push to `1spread/main`.
+- [x] Commit and push to `1spread/main`.
 - [x] Record final result.
 
 ## Notes
@@ -24,3 +24,4 @@ Update the release workflow so GitHub Actions uses Node 24-compatible actions an
 
 - Parsed `.github/workflows/release.yml` with Ruby YAML successfully.
 - `git diff --check` passed.
+- Pushed the Node 24 workflow update to `1spread/main`.
