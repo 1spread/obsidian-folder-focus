@@ -12,7 +12,7 @@ Finalize the current fixes on `main`, bump plugin manifest/package metadata for 
 - [x] Update changelog and README release version.
 - [x] Run tests, build, and diff checks.
 - [x] Commit changes on `main`.
-- [ ] Push `main`.
+- [x] Push `main`.
 
 ## Notes
 
@@ -29,3 +29,7 @@ Finalize the current fixes on `main`, bump plugin manifest/package metadata for 
 ## Commit
 
 - Created the release commit on `main`.
+
+## Push
+
+- Pushed `main` to `1spread/obsidian-folder-focus`.
