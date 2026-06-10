@@ -1,4 +1,5 @@
 import { ItemView, WorkspaceLeaf, TFile, TFolder, TAbstractFile, Menu, Modal, App, setIcon, Notice, Platform, normalizePath } from 'obsidian';
+import { getRenameMenuTitle } from './contextMenuLabels';
 import { getFileTypeBadge as getBadgeForExtension } from './fileTypeBadge';
 import type { FileTypeBadge } from './fileTypeBadge';
 import {
@@ -7,6 +8,7 @@ import {
   shouldSearchContent,
   type FolderFocusSearchMode,
 } from './searchUtils';
+import { sortVaultItems, type SortDirection, type SortOrder } from './sortUtils';
 import type FolderFocusPlugin from './main';
 
 export const VIEW_TYPE_FOLDER_FOCUS = 'folder-focus-view';
@@ -17,9 +19,6 @@ type NodePath = typeof import('path');
 interface ObsidianDesktopWindow extends Window {
   require?: NodeRequire;
 }
-
-export type SortOrder = 'name' | 'modified' | 'created';
-export type SortDirection = 'asc' | 'desc';
 
 interface FolderFocusDragData {
   type: 'folder-focus-items';
@@ -191,37 +190,16 @@ export class FolderFocusView extends ItemView {
   }
 
   getSortedChildren(folder: TFolder): TAbstractFile[] {
-    const children = [...folder.children];
-    const dir = this.sortDirection === 'asc' ? 1 : -1;
+    return this.getSortedItems(folder.children);
+  }
 
-    // Sort: folders first, then files, sorted within each group
-    return children.sort((a, b) => {
-      const aIsFolder = a instanceof TFolder;
-      const bIsFolder = b instanceof TFolder;
-      if (aIsFolder && !bIsFolder) return -1;
-      if (!aIsFolder && bIsFolder) return 1;
-
-      // Apply sort order within same type
-      let result: number;
-      switch (this.sortOrder) {
-        case 'modified': {
-          const aMtime = a instanceof TFile ? a.stat.mtime : 0;
-          const bMtime = b instanceof TFile ? b.stat.mtime : 0;
-          result = aMtime - bMtime;
-          break;
-        }
-        case 'created': {
-          const aCtime = a instanceof TFile ? a.stat.ctime : 0;
-          const bCtime = b instanceof TFile ? b.stat.ctime : 0;
-          result = aCtime - bCtime;
-          break;
-        }
-        case 'name':
-        default:
-          result = a.name.localeCompare(b.name);
-          break;
-      }
-      return result * dir;
+  private getSortedItems(items: TAbstractFile[]): TAbstractFile[] {
+    return sortVaultItems(items, {
+      sortOrder: this.sortOrder,
+      sortDirection: this.sortDirection,
+      isFolder: (item) => item instanceof TFolder,
+      getModifiedTime: (item) => item instanceof TFile ? item.stat.mtime : 0,
+      getCreatedTime: (item) => item instanceof TFile ? item.stat.ctime : 0,
     });
   }
 
@@ -574,7 +552,7 @@ export class FolderFocusView extends ItemView {
         }
       }
 
-      this.filteredItems = matchedItems;
+      this.filteredItems = this.getSortedItems(matchedItems);
     }
 
     // Reset selection to first item
@@ -702,7 +680,7 @@ export class FolderFocusView extends ItemView {
         if (isFolder) {
           menu.addItem((menuItem) => {
           menuItem
-            .setTitle('Rename folder')
+            .setTitle(getRenameMenuTitle('folder'))
             .setIcon('pencil')
             .onClick(() => {
               void this.renameItem(item).catch((e) => {
@@ -740,6 +718,17 @@ export class FolderFocusView extends ItemView {
           menu.addSeparator();
         } else {
           // File-specific options
+          menu.addItem((menuItem) => {
+          menuItem
+            .setTitle(getRenameMenuTitle('file'))
+            .setIcon('pencil')
+            .onClick(() => {
+              void this.renameItem(item).catch((e) => {
+                console.error('Folder focus: failed to rename item', e);
+              });
+            });
+          });
+
           menu.addItem((menuItem) => {
           menuItem
             .setTitle('Delete file')

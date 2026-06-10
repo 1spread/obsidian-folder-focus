@@ -1,5 +1,17 @@
 # Changelog
 
+## 1.1.2 - 2026-06-10
+
+### Added
+- Added an explicit `Rename file` action to file row context menus.
+
+### Fixed
+- Made header action icons visible across Obsidian themes.
+- Made search mode tabs wrap cleanly in narrow sidebars.
+- Made filtered search results respect `Name`, `Created`, `Modified`, and sort direction settings.
+
+---
+
 ## 1.1.1 - 2026-06-08
 
 ### Fixed

@@ -165,7 +165,7 @@ All commands are available via the command palette (`⌘+P` / `Ctrl+P`):
 
 ## Releases
 
-- Current version: `1.1.1`
+- Current version: `1.1.2`
 - Minimum Obsidian version: `1.13.0`
 - Release downloads: [GitHub Releases](https://github.com/1spread/obsidian-folder-focus/releases/latest)
 - Full history: [CHANGELOG.md](CHANGELOG.md)
