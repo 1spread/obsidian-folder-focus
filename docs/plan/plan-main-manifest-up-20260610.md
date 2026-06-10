@@ -33,3 +33,18 @@ Finalize the current fixes on `main`, bump plugin manifest/package metadata for 
 ## Push
 
 - Pushed `main` to `1spread/obsidian-folder-focus`.
+
+## Release Follow-up
+
+- [x] Confirmed GitHub Release `1.1.2` was missing after the manifest bump.
+- [x] Confirmed local tag `1.1.2` was missing.
+- [x] Push tag `1.1.2` to trigger the release workflow.
+- [x] Verify the GitHub Actions release workflow completes.
+- [x] Verify GitHub Release `1.1.2` exists with release assets.
+
+## Release Verification
+
+- Pushed tag `1.1.2`.
+- GitHub Actions run `27266353092` completed successfully.
+- GitHub Release `1.1.2` is published and is not draft/prerelease.
+- Release assets verified: `main.js`, `manifest.json`, `styles.css`.
