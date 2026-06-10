@@ -13,6 +13,47 @@ export function normalizeSearchQuery(query: string): string {
   return query.trim().toLowerCase();
 }
 
+export function normalizeFolderPathQuery(query: string): string {
+  return query
+    .trim()
+    .replace(/\\/g, '/')
+    .replace(/\/+/g, '/')
+    .replace(/^\/+|\/+$/g, '')
+    .toLowerCase();
+}
+
+export function isFolderPathSearchQuery(query: string): boolean {
+  return normalizeFolderPathQuery(query).includes('/');
+}
+
+export function folderPathMatches(folderPath: string, query: string): boolean {
+  const normalizedPath = normalizeFolderPathQuery(folderPath);
+  const normalizedQuery = normalizeFolderPathQuery(query);
+  if (!normalizedQuery) return false;
+  return normalizedPath.includes(normalizedQuery);
+}
+
+export function compareFolderPathMatch(aPath: string, bPath: string, query: string): number {
+  const normalizedQuery = normalizeFolderPathQuery(query);
+  const a = normalizeFolderPathQuery(aPath);
+  const b = normalizeFolderPathQuery(bPath);
+
+  const aExact = a === normalizedQuery;
+  const bExact = b === normalizedQuery;
+  if (aExact !== bExact) return aExact ? -1 : 1;
+
+  const aEnds = a.endsWith(normalizedQuery);
+  const bEnds = b.endsWith(normalizedQuery);
+  if (aEnds !== bEnds) return aEnds ? -1 : 1;
+
+  const aStarts = a.startsWith(normalizedQuery);
+  const bStarts = b.startsWith(normalizedQuery);
+  if (aStarts !== bStarts) return aStarts ? -1 : 1;
+
+  if (a.length !== b.length) return a.length - b.length;
+  return a.localeCompare(b);
+}
+
 export function shouldSearchContent(mode: FolderFocusSearchMode): boolean {
   return mode === 'full-text';
 }

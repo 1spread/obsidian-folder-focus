@@ -20,8 +20,12 @@ function loadSearchUtilsModule() {
 }
 
 const {
+  compareFolderPathMatch,
+  folderPathMatches,
   getHighlightSegments,
+  isFolderPathSearchQuery,
   isSearchMode,
+  normalizeFolderPathQuery,
   normalizeFavoriteFolderPaths,
   normalizeSearchQuery,
   shouldSearchContent,
@@ -40,6 +44,41 @@ test('validates supported search modes', () => {
 
 test('normalizes search query', () => {
   assert.equal(normalizeSearchQuery('  XLSX  '), 'xlsx');
+});
+
+test('normalizes folder path search queries', () => {
+  assert.equal(
+    normalizeFolderPathQuery(' /owis//lp/pdf-captures-20260610/ '),
+    'owis/lp/pdf-captures-20260610'
+  );
+  assert.equal(normalizeFolderPathQuery('owis\\lp\\pdf-captures-20260610'), 'owis/lp/pdf-captures-20260610');
+});
+
+test('detects path-like folder searches', () => {
+  assert.equal(isFolderPathSearchQuery('owis/lp'), true);
+  assert.equal(isFolderPathSearchQuery('pdf-captures-20260610'), false);
+});
+
+test('matches folders by partial normalized path', () => {
+  assert.equal(folderPathMatches('clients/owis/lp/pdf-captures-20260610', 'owis/lp/pdf-captures-20260610/'), true);
+  assert.equal(folderPathMatches('clients/owis/lp/pdf-captures-20260610', 'other/lp'), false);
+});
+
+test('ranks exact folder path matches before broader path matches', () => {
+  const paths = [
+    'archive/owis/lp/pdf-captures-20260610',
+    'owis/lp/pdf-captures-20260610',
+    'client/owis/lp/pdf-captures-20260610/backups',
+  ];
+
+  assert.deepEqual(
+    sameRealm(paths.sort((a, b) => compareFolderPathMatch(a, b, 'owis/lp/pdf-captures-20260610/'))),
+    [
+      'owis/lp/pdf-captures-20260610',
+      'archive/owis/lp/pdf-captures-20260610',
+      'client/owis/lp/pdf-captures-20260610/backups',
+    ]
+  );
 });
 
 test('content search only runs in full-text mode', () => {

@@ -3,7 +3,10 @@ import { getRenameMenuTitle } from './contextMenuLabels';
 import { getFileTypeBadge as getBadgeForExtension } from './fileTypeBadge';
 import type { FileTypeBadge } from './fileTypeBadge';
 import {
+  compareFolderPathMatch,
+  folderPathMatches,
   getHighlightSegments,
+  isFolderPathSearchQuery,
   normalizeSearchQuery,
   shouldSearchContent,
   type FolderFocusSearchMode,
@@ -455,6 +458,9 @@ export class FolderFocusView extends ItemView {
         if (event.key === 'Enter') {
           event.preventDefault();
           this.searchQuery = this.searchEl.value;
+          if (this.openBestFolderPathMatch(this.searchQuery)) {
+            return;
+          }
           await this.applyFilter();
           this.renderList();
           this.listEl.focus();
@@ -528,6 +534,16 @@ export class FolderFocusView extends ItemView {
           continue;
         }
 
+        // Match folder path for path-like queries.
+        if (
+          item instanceof TFolder
+          && isFolderPathSearchQuery(this.searchQuery)
+          && folderPathMatches(item.path, this.searchQuery)
+        ) {
+          matchedItems.push(item);
+          continue;
+        }
+
         // Match by name
         if (item.name.toLowerCase().includes(query)) {
           matchedItems.push(item);
@@ -562,6 +578,21 @@ export class FolderFocusView extends ItemView {
     }
     this.anchorIndex = 0;
     this.focusIndex = 0;
+  }
+
+  private openBestFolderPathMatch(query: string): boolean {
+    if (!isFolderPathSearchQuery(query)) return false;
+
+    const folders = this.allFilesInFolder
+      .filter((item): item is TFolder => item instanceof TFolder)
+      .filter((folder) => folderPathMatches(folder.path, query))
+      .sort((a, b) => compareFolderPathMatch(a.path, b.path, query));
+
+    const folder = folders[0];
+    if (!folder) return false;
+
+    this.setFolder(folder);
+    return true;
   }
 
   renderList() {
