@@ -168,6 +168,31 @@
   outline: none;
 }
 
+.folder-focus-copy-path {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 4px;
+  background: var(--background-primary);
+  color: var(--text-muted);
+  cursor: pointer;
+  outline: none;
+}
+
+.folder-focus-copy-path:hover {
+  border-color: var(--interactive-accent);
+  color: var(--text-normal);
+}
+
+.folder-focus-copy-path svg {
+  width: 14px;
+  height: 14px;
+}
+
 .folder-focus-favorite-toggle:hover,
 .folder-focus-favorite-toggle.is-favorite {
   border-color: var(--interactive-accent);
@@ -182,6 +207,7 @@
 .folder-focus-sort-dir,
 .folder-focus-new-folder,
 .folder-focus-new-note,
+.folder-focus-copy-path,
 .folder-focus-favorite-toggle {
   color: var(--text-normal);
 }
@@ -189,6 +215,7 @@
 .folder-focus-sort-dir svg,
 .folder-focus-new-folder svg,
 .folder-focus-new-note svg,
+.folder-focus-copy-path svg,
 .folder-focus-favorite-toggle svg {
   color: inherit;
   stroke: currentColor;

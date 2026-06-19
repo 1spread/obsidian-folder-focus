@@ -245,6 +245,13 @@ export class FolderFocusView extends ItemView {
     this.renderHeader();
   }
 
+  private async copyCurrentFolderPath(): Promise<void> {
+    if (!this.currentFolder) return;
+    const folderPath = this.currentFolder.path || '/';
+    await navigator.clipboard.writeText(folderPath);
+    new Notice(`Copied folder path: ${folderPath}`);
+  }
+
   private async setSearchMode(mode: FolderFocusSearchMode): Promise<void> {
     this.searchQuery = this.searchEl?.value ?? this.searchQuery;
     this.searchMode = mode;
@@ -377,6 +384,16 @@ export class FolderFocusView extends ItemView {
     const pathRowEl = this.headerEl.createDiv({ cls: 'folder-focus-path-row' });
     const pathEl = pathRowEl.createDiv({ cls: 'folder-focus-path' });
     pathEl.setText(this.currentFolder.path || '/');
+
+    const copyPathBtn = pathRowEl.createEl('button', { cls: 'folder-focus-copy-path' });
+    setIcon(copyPathBtn, 'copy');
+    copyPathBtn.setAttribute('aria-label', 'Copy current folder path');
+    copyPathBtn.addEventListener('click', () => {
+      void this.copyCurrentFolderPath().catch((e) => {
+        console.error('Folder focus: failed to copy current folder path', e);
+        new Notice('Failed to copy folder path.');
+      });
+    });
 
     const favoriteBtn = pathRowEl.createEl('button', { cls: 'folder-focus-favorite-toggle' });
     const isFavorite = this.plugin.isFavoriteFolder(this.currentFolder.path);

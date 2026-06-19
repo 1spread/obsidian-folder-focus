@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.1.3 - 2026-06-19
+
+### Added
+- Added a header button to copy the current folder path.
+- Added path-like folder search that can jump to matching nested folders.
+
+---
+
 ## 1.1.2 - 2026-06-10
 
 ### Added
